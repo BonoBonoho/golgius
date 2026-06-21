@@ -1,5 +1,4 @@
 import { verticals, type VerticalKey } from "@/lib/verticals";
-import CountUp from "@/components/CountUp";
 
 // Phase 1 스텁. Phase 2에서 본격 히어로로 확장됩니다.
 export default function Hero({ vertical }: { vertical: VerticalKey }) {
@@ -35,21 +34,6 @@ export default function Hero({ vertical }: { vertical: VerticalKey }) {
           >
             왜 골지어스인가
           </a>
-        </div>
-
-        {/* 실적 — 명함의 핵심 수치를 신뢰 앵커로 */}
-        <div className="mt-16 flex flex-wrap gap-12 border-t border-line pt-8">
-          {v.stats.map((s) => (
-            <div key={s.label}>
-              <div
-                className="text-3xl font-extrabold md:text-4xl"
-                style={{ color: "var(--accent)" }}
-              >
-                <CountUp value={s.value} />
-              </div>
-              <div className="mt-1 text-sm text-dim">{s.label}</div>
-            </div>
-          ))}
         </div>
       </div>
     </section>
