@@ -10,6 +10,7 @@ import {
   type OrderStatus,
 } from "@/lib/orders";
 import { setOrderStatus } from "@/app/actions/orders";
+import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -57,8 +58,15 @@ function StatusButtons({ order }: { order: Order }) {
   );
 }
 
-export default async function OrdersPage() {
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
   if (!(await isAuthed())) redirect("/admin");
+
+  const sp = await searchParams;
+  const view: "cards" | "table" = sp.view === "table" ? "table" : "cards";
 
   const orders = await getOrders();
   const withFiles = await Promise.all(
@@ -82,19 +90,43 @@ export default async function OrdersPage() {
             )}
           </p>
         </div>
-        <Link
-          href="/admin"
-          className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
-        >
-          ← 리드 관리
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-1 inline-flex overflow-hidden rounded-full border border-line">
+            <Link
+              href="/admin/orders"
+              className="px-3 py-1 text-xs font-semibold transition"
+              style={view === "cards" ? { backgroundColor: "var(--accent)", color: "var(--color-base)" } : { color: "var(--color-dim)" }}
+            >
+              카드
+            </Link>
+            <Link
+              href="/admin/orders?view=table"
+              className="px-3 py-1 text-xs font-semibold transition"
+              style={view === "table" ? { backgroundColor: "var(--accent)", color: "var(--color-base)" } : { color: "var(--color-dim)" }}
+            >
+              테이블
+            </Link>
+          </span>
+          <a
+            href="/admin/orders/export"
+            className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
+          >
+            엑셀 다운로드
+          </a>
+          <Link
+            href="/admin"
+            className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
+          >
+            ← 리드 관리
+          </Link>
+        </div>
       </div>
 
       {orders.length === 0 ? (
         <p className="mt-12 rounded-2xl border border-line bg-surface p-10 text-center text-sm text-dim">
           아직 접수된 발주 요청이 없습니다.
         </p>
-      ) : (
+      ) : view === "cards" ? (
         <div className="mt-8 space-y-4">
           {withFiles.map(({ order, fileUrl }) => (
             <div key={order.id} className="rounded-2xl border border-line bg-surface p-5">
@@ -136,11 +168,65 @@ export default async function OrdersPage() {
                 <p className="mt-2 text-sm text-dim">{order.message}</p>
               )}
 
-              <div className="mt-4 border-t border-line pt-3">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
                 <StatusButtons order={order} />
+                <DeleteOrderButton id={order.id} />
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        /* 테이블 보기 */
+        <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-surface text-dim">
+              <tr>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">접수일시</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">상태</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">이름</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">연락처</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">품목</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">옵션</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">시안</th>
+                <th className="px-4 py-3 font-semibold">요청</th>
+                <th className="px-4 py-3 font-semibold">관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              {withFiles.map(({ order, fileUrl }) => (
+                <tr key={order.id} className="border-t border-line align-top">
+                  <td className="whitespace-nowrap px-4 py-3 text-dim">{fmt.format(new Date(order.createdAt))}</td>
+                  <td className="whitespace-nowrap px-4 py-3">{STATUS_LABEL[order.status]}</td>
+                  <td className="whitespace-nowrap px-4 py-3 font-semibold">
+                    {order.name}
+                    {order.email && <span className="block font-normal text-dim">{order.email}</span>}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <a href={`tel:${order.phone.replace(/[^0-9+]/g, "")}`} className="text-gold hover:opacity-80">
+                      {order.phone}
+                    </a>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">{order.productType}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-dim">
+                    {[order.options.color, order.options.size, order.options.quantity].filter(Boolean).join(" · ") || "—"}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    {fileUrl ? (
+                      <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-gold hover:opacity-80">
+                        파일 보기
+                      </a>
+                    ) : order.designFile ? (
+                      <span className="text-dim">{order.designFile}</span>
+                    ) : (
+                      <span className="text-dim">없음</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-dim">{order.message || "—"}</td>
+                  <td className="px-4 py-3"><DeleteOrderButton id={order.id} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </main>
