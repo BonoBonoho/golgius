@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { submitContact, type ContactState } from "@/app/actions/contact";
+import { deriveSource } from "@/lib/attribution";
 import type { OfferingGroup, VerticalKey } from "@/lib/verticals";
 
 const initial: ContactState = { ok: false, message: "" };
@@ -26,6 +27,8 @@ export default function ContactForm({
   const [state, action, pending] = useActionState(submitContact, initial);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [source, setSource] = useState("direct");
+  useEffect(() => setSource(deriveSource()), []);
 
   const toggleOpen = (tag: string) => setOpen((o) => ({ ...o, [tag]: !o[tag] }));
   const togglePick = (key: string) =>
@@ -52,6 +55,7 @@ export default function ContactForm({
   return (
     <form action={action} className="rounded-2xl border border-line bg-surface p-7">
       <input type="hidden" name="vertical" value={vertical} />
+      <input type="hidden" name="source" value={source} />
       {/* 허니팟(봇 방지) */}
       <input type="text" name="company" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
 

@@ -27,6 +27,7 @@ export async function submitContact(
     .filter(Boolean)
     .slice(0, 50);
   const message = String(formData.get("message") ?? "").trim();
+  const source = String(formData.get("source") ?? "").trim().slice(0, 60) || "direct";
   const verticalRaw = String(formData.get("vertical") ?? "");
   const vertical: VerticalKey = verticalRaw === "hospital" ? "hospital" : "gym";
 
@@ -58,7 +59,7 @@ export async function submitContact(
     .join("\n");
 
   try {
-    const lead = await addLead({ name, phone, email, region, message: fullMessage, vertical });
+    const lead = await addLead({ name, phone, email, region, message: fullMessage, vertical, source });
     // 알림은 접수 성공과 분리 — 실패해도 사용자에겐 성공 응답(내부 allSettled)
     await notifyNewLead(lead);
   } catch {
