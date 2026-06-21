@@ -1,4 +1,5 @@
 import { verticals, type VerticalKey } from "@/lib/verticals";
+import CountUp from "@/components/CountUp";
 
 // 실적 — #cases
 export default function Cases({ vertical }: { vertical: VerticalKey }) {
@@ -20,7 +21,7 @@ export default function Cases({ vertical }: { vertical: VerticalKey }) {
                 className="text-3xl font-extrabold md:text-4xl"
                 style={{ color: "var(--accent)" }}
               >
-                {s.value}
+                <CountUp value={s.value} />
               </div>
               <div className="mt-1 text-sm text-dim">{s.label}</div>
             </div>
