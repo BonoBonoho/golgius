@@ -6,7 +6,8 @@ import { useMemo, useRef, useState } from "react";
 const VIEWS = [
   { key: "tee-front", label: "티셔츠 앞" },
   { key: "tee-back", label: "티셔츠 뒤" },
-  { key: "pants", label: "바지" },
+  { key: "shorts", label: "반바지" },
+  { key: "pants", label: "긴바지" },
   { key: "towel", label: "수건" },
 ] as const;
 type ViewKey = (typeof VIEWS)[number]["key"];
@@ -18,8 +19,13 @@ function productSvg(type: ViewKey, color: string): string {
   if (type === "towel") {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="16" y="18" width="68" height="64" rx="5" fill="${color}" ${s}/><rect x="16" y="68" width="68" height="6" fill="#00000022"/></svg>`;
   }
+  if (type === "shorts") {
+    // 반바지 — 짧은 기장
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M28,30 L72,30 L74,62 L55,62 L50,46 L45,62 L26,62 Z" fill="${color}" ${s}/><rect x="28" y="30" width="44" height="5" fill="#00000022"/></svg>`;
+  }
   if (type === "pants") {
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30,16 L70,16 L73,86 L55,86 L50,50 L45,86 L27,86 Z" fill="${color}" ${s}/><rect x="30" y="16" width="40" height="5" fill="#00000022"/></svg>`;
+    // 긴바지 — 긴 기장
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M32,12 L68,12 L70,90 L54,90 L50,48 L46,90 L30,90 Z" fill="${color}" ${s}/><rect x="32" y="12" width="36" height="5" fill="#00000022"/></svg>`;
   }
   if (type === "tee-back") {
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M36,16 L22,24 L11,36 L20,47 L27,42 L27,86 L73,86 L73,42 L80,47 L89,36 L78,24 L64,16 C58,22 42,22 36,16 Z" fill="${color}" ${s}/></svg>`;
@@ -35,6 +41,8 @@ interface Design {
   scale: number;
 }
 const blankDesign = (): Design => ({ logo: null, x: 0.5, y: 0.45, scale: 0.25 });
+const initDesign = () =>
+  Object.fromEntries(VIEWS.map((v) => [v.key, blankDesign()])) as Record<ViewKey, Design>;
 
 const inputCls =
   "mt-1.5 w-full rounded-lg border border-line bg-base px-4 py-3 text-sm outline-none transition focus:border-gold";
@@ -56,12 +64,7 @@ const svgUrl = (type: ViewKey, color: string) =>
 export default function DesignStudio() {
   const [color, setColor] = useState(COLORS[0]);
   const [active, setActive] = useState<ViewKey>("tee-front");
-  const [design, setDesign] = useState<Record<ViewKey, Design>>(() => ({
-    "tee-front": blankDesign(),
-    "tee-back": blankDesign(),
-    pants: blankDesign(),
-    towel: blankDesign(),
-  }));
+  const [design, setDesign] = useState<Record<ViewKey, Design>>(initDesign);
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<Status>(null);
 
@@ -157,12 +160,7 @@ export default function DesignStudio() {
       setResult(data);
       if (data?.ok) {
         form.reset();
-        setDesign({
-          "tee-front": blankDesign(),
-          "tee-back": blankDesign(),
-          pants: blankDesign(),
-          towel: blankDesign(),
-        });
+        setDesign(initDesign());
       }
     } catch {
       setResult({ ok: false, message: "전송 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." });
