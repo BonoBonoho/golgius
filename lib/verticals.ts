@@ -27,6 +27,12 @@ export interface Review {
   role: string; // "헬스장 관장" 등
 }
 
+export interface OfferingGroup {
+  tag: string; // 영문 태그 (AI, GEAR ...)
+  title: string; // 한글 분류명
+  items: string[]; // 취급 품목/서비스
+}
+
 export interface Vertical {
   key: VerticalKey;
   label: string; // 한글 라벨
@@ -43,6 +49,7 @@ export interface Vertical {
   process: ProcessStep[];
   cases: CaseItem[];
   reviews: Review[];
+  offerings: OfferingGroup[];
   contact: {
     eyebrow: string;
     title: string;
@@ -87,6 +94,17 @@ export const verticals: Record<VerticalKey, Vertical> = {
       { quote: "오픈 일정과 예산을 한 번도 넘기지 않았어요. 처음 여는 입장에서 가장 든든했던 부분입니다.", author: "K 관장", role: "헬스장 신규 오픈" },
       { quote: "수익 구조부터 같이 짜주니 무리한 투자를 피할 수 있었습니다.", author: "J 대표", role: "복합 피트니스" },
     ],
+    offerings: [
+      { tag: "AI", title: "AI 솔루션", items: ["Formula X 헬스장 경영", "Milestone X 팀 프로젝트 관리", "BROJ"] },
+      { tag: "CONSULT", title: "컨설팅", items: ["부띠끄·퍼블릭 피트니스 콘텐츠", "공간 배치·동선 설계", "수익성 분석"] },
+      { tag: "GEAR", title: "기구 판매", items: ["헬스 기구", "유산소 머신", "웨이트 머신", "트레이닝 장비 일체"] },
+      { tag: "RENTAL", title: "렌탈", items: ["코웨이", "SK매직", "LG", "청호", "쿠쿠", "큐밍", "웰스", "단말기", "세스코(향기·살균·방역)"] },
+      { tag: "NETWORK·IT", title: "네트워크·IT", items: ["기업 인터넷", "셋탑 TV", "기업 WIFI", "네트워크 통합 포설", "PC", "IoT"] },
+      { tag: "SIGN", title: "사이니지", items: ["DID", "LED", "LCD", "비디오월", "CMS", "옥외 전광판", "키오스크", "빔프로젝터"] },
+      { tag: "LIVING", title: "생활·가전", items: ["복합기", "안마의자", "세라젬", "커피머신", "워시타워", "시스템 에어컨", "공기청정기"] },
+      { tag: "SECURITY", title: "보안·CCTV", items: ["SECOM", "CAPS", "출입통제", "AI CCTV", "화재·사업장 책임보험"] },
+      { tag: "F&B", title: "F&B", items: ["Vrink 무인 음료", "스마트 자판기 솔루션"] },
+    ],
     contact: {
       eyebrow: "Get Started",
       title: "헬스장 오픈, 어디서부터 시작할지 같이 정리해 드립니다.",
@@ -129,6 +147,7 @@ export const verticals: Record<VerticalKey, Vertical> = {
       { quote: "인허가 동선까지 챙겨주셔서 개원 일정이 한 번도 밀리지 않았습니다.", author: "P 원장", role: "정형외과 개원" },
       { quote: "장비와 네트워크를 한 팀이 맡아주니 개원 준비가 훨씬 단순해졌어요.", author: "L 원장", role: "피부과 개원" },
     ],
+    offerings: [],
     contact: {
       eyebrow: "Get Started",
       title: "개원 준비, 무엇부터 점검해야 할지 함께 정리해 드립니다.",
