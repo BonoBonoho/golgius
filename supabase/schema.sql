@@ -53,7 +53,17 @@ create table if not exists public.lead_events (
 
 create index if not exists lead_events_lead_id_idx on public.lead_events (lead_id);
 
+-- ── app_settings (어드민에서 관리하는 키/설정 key-value) ─
+-- 알림 키(Resend/Solapi)·수신처 등을 여기 저장해 어드민에서 수정.
+-- ⚠️ 평문 저장이므로 service_role(서버)로만 접근, anon 노출 금지.
+create table if not exists public.app_settings (
+  key         text primary key,
+  value       text not null default '',
+  updated_at  timestamptz not null default now()
+);
+
 -- ── RLS ─────────────────────────────────────────────────
 -- 정책 없음 = anon 키 접근 불가. 서버는 service_role 키로 RLS 우회(안전).
 alter table public.leads enable row level security;
 alter table public.lead_events enable row level security;
+alter table public.app_settings enable row level security;

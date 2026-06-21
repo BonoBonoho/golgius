@@ -10,10 +10,7 @@
 import { createHmac, randomBytes } from "crypto";
 import type { Lead } from "@/lib/leads";
 import { verticals } from "@/lib/verticals";
-
-function env(k: string): string {
-  return (process.env[k] ?? "").trim();
-}
+import { getNotifyConfig, type NotifyConfig } from "@/lib/settings";
 
 function digits(phone: string): string {
   return phone.replace(/[^0-9]/g, "");
@@ -39,12 +36,12 @@ async function resendSend(
   if (!res.ok) throw new Error(`resend ${res.status}`);
 }
 
-async function sendEmail(lead: Lead): Promise<void> {
-  const apiKey = env("RESEND_API_KEY");
+async function sendEmail(lead: Lead, cfg: NotifyConfig): Promise<void> {
+  const apiKey = cfg.resendApiKey;
   if (!apiKey) return; // 미설정 → no-op
-  const from = env("RESEND_FROM") || "골지어스 <onboarding@resend.dev>";
+  const from = cfg.resendFrom || "골지어스 <onboarding@resend.dev>";
   const label = verticals[lead.vertical].label;
-  const notifyTo = env("GOLGIUS_NOTIFY_EMAIL");
+  const notifyTo = cfg.notifyEmail;
 
   const tasks: Promise<void>[] = [];
 
@@ -99,14 +96,14 @@ async function solapiSend(
   if (!res.ok) throw new Error(`solapi ${res.status}`);
 }
 
-async function sendSms(lead: Lead): Promise<void> {
-  const apiKey = env("SOLAPI_API_KEY");
-  const apiSecret = env("SOLAPI_API_SECRET");
-  const sender = digits(env("SOLAPI_SENDER"));
+async function sendSms(lead: Lead, cfg: NotifyConfig): Promise<void> {
+  const apiKey = cfg.solapiApiKey;
+  const apiSecret = cfg.solapiApiSecret;
+  const sender = digits(cfg.solapiSender);
   if (!apiKey || !apiSecret || !sender) return; // 미설정 → no-op
 
   const label = verticals[lead.vertical].label;
-  const notifyPhone = digits(env("GOLGIUS_NOTIFY_PHONE"));
+  const notifyPhone = digits(cfg.notifyPhone);
   const tasks: Promise<void>[] = [];
 
   // (a) 담당자에게 신규 리드 알림
@@ -136,9 +133,10 @@ async function sendSms(lead: Lead): Promise<void> {
 // async function sendAlimtalk(lead: Lead): Promise<void> { ... }
 
 export async function notifyNewLead(lead: Lead): Promise<void> {
+  const cfg = await getNotifyConfig();
   await Promise.allSettled([
-    sendEmail(lead),
-    sendSms(lead),
-    // sendAlimtalk(lead),  // Phase 5
+    sendEmail(lead, cfg),
+    sendSms(lead, cfg),
+    // sendAlimtalk(lead, cfg),  // Phase 5
   ]);
 }

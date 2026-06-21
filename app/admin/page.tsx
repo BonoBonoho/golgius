@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { isAuthed, adminPassword } from "@/lib/admin";
 import { getLeads, isPersistent, type Stage } from "@/lib/leads";
 import { logout } from "@/app/actions/admin";
@@ -42,11 +43,19 @@ export default async function AdminPage() {
             )}
           </p>
         </div>
-        <form action={logout}>
-          <button className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink">
-            로그아웃
-          </button>
-        </form>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/settings"
+            className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
+          >
+            알림 설정
+          </Link>
+          <form action={logout}>
+            <button className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink">
+              로그아웃
+            </button>
+          </form>
+        </div>
       </div>
 
       {leads.length === 0 ? (
