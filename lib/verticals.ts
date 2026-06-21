@@ -86,9 +86,9 @@ export const verticals: Record<VerticalKey, Vertical> = {
       { no: "05", title: "오픈·운영 지원", body: "CRM·결제 셋업과 오픈 마케팅으로 초기 운영을 안정화합니다." },
     ],
     cases: [
-      { name: "강남 프리미엄 짐", meta: "신규 오픈 · 80평", result: "오픈 3개월 회원 1,200명" },
-      { name: "수원 복합 피트니스", meta: "리뉴얼 · 120평", result: "월매출 약 40% 증가" },
-      { name: "분당 PT 스튜디오", meta: "신규 오픈 · 35평", result: "오픈 2개월 손익분기 달성" },
+      { name: "한 팀이 전부", meta: "ONE-STOP", result: "공간·기구·인테리어·IT·보안·F&B까지 한 번에 — 업체 여러 곳 알아볼 필요 없습니다." },
+      { name: "결정만 하세요", meta: "EASY", result: "복잡한 발주·시공·세팅은 골지어스가. 대표님은 콘셉트와 예산만 정하면 됩니다." },
+      { name: "열면 바로 가동", meta: "READY", result: "CRM·결제·오픈 마케팅까지 세팅해, 오픈 첫날부터 운영에만 집중하도록." },
     ],
     reviews: [
       { quote: "오픈 일정과 예산을 한 번도 넘기지 않았어요. 처음 여는 입장에서 가장 든든했던 부분입니다.", author: "K 관장", role: "헬스장 신규 오픈" },
@@ -139,9 +139,9 @@ export const verticals: Record<VerticalKey, Vertical> = {
       { no: "05", title: "운영 시스템·개원", body: "예약·CRM·결제 시스템을 안정화하고 개원을 지원합니다." },
     ],
     cases: [
-      { name: "서울 정형외과", meta: "신규 개원 · 150평", result: "인허가부터 개원까지 일괄 진행" },
-      { name: "경기 피부과 의원", meta: "신규 개원 · 90평", result: "장비·IT 인프라 통합 구축" },
-      { name: "인천 내과 의원", meta: "이전 개원 · 70평", result: "진료 공백 없이 이전 완료" },
+      { name: "한 팀이 전부", meta: "ONE-STOP", result: "공간·인허가·장비·네트워크·사이니지까지 한 번에 — 창구 하나로 끝납니다." },
+      { name: "진료 준비만 하세요", meta: "EASY", result: "인허가 동선·시공·셋업은 골지어스가. 원장님은 진료에만 집중하면 됩니다." },
+      { name: "열면 바로 가동", meta: "READY", result: "예약·CRM·결제까지 세팅해, 개원 첫날부터 안정적으로." },
     ],
     reviews: [
       { quote: "인허가 동선까지 챙겨주셔서 개원 일정이 한 번도 밀리지 않았습니다.", author: "P 원장", role: "정형외과 개원" },

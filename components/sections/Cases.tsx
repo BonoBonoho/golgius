@@ -32,20 +32,27 @@ export default function Cases({ vertical }: { vertical: VerticalKey }) {
         {/* 함께 오픈한 센터 로고 마퀴 */}
         <PartnerMarquee vertical={vertical} />
 
-        {/* 사례 */}
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {v.cases.map((c) => (
-            <div key={c.name} className="rounded-2xl border border-line bg-surface p-7">
-              <p className="font-mono text-xs text-dim">{c.meta}</p>
-              <h3 className="mt-3 text-lg font-bold">{c.name}</h3>
-              <p
-                className="mt-4 text-sm font-semibold"
-                style={{ color: "var(--accent)" }}
-              >
-                {c.result}
-              </p>
-            </div>
-          ))}
+        {/* 원스톱 — 맡기면 한 번에 끝 */}
+        <div className="mt-16">
+          <p className="eyebrow">All-in-one</p>
+          <h3 className="mt-3 text-2xl font-extrabold tracking-tight md:text-3xl">
+            맡기면, 한 번에 끝납니다
+          </h3>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-dim md:text-base">
+            기획부터 시공·세팅·운영까지 한 팀이 맡습니다. 여러 업체 찾아다닐 필요 없이, 결정만 하세요.
+          </p>
+
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            {v.cases.map((c) => (
+              <div key={c.name} className="rounded-2xl border border-line bg-surface p-7">
+                <p className="font-mono text-xs tracking-wider" style={{ color: "var(--accent)" }}>
+                  {c.meta}
+                </p>
+                <h4 className="mt-3 text-lg font-bold">{c.name}</h4>
+                <p className="mt-2 text-sm leading-relaxed text-dim">{c.result}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
