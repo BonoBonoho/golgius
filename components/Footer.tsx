@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
+import Brandmark from "@/components/Brandmark";
 
 export default function Footer() {
   const c = site.contact;
@@ -9,8 +10,8 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-5 py-12">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div>
-            <div className="text-lg font-extrabold tracking-tight">{site.name}</div>
-            <p className="mt-1 text-sm text-dim">{site.tagline}</p>
+            <Brandmark size="md" />
+            <p className="mt-3 text-sm text-dim">{site.tagline}</p>
             <p className="mt-4 max-w-sm text-sm text-dim">{site.description}</p>
             <Link
               href="/order"

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { verticals, otherVertical, type VerticalKey } from "@/lib/verticals";
+import Brandmark from "@/components/Brandmark";
 
 export default function Header({ vertical }: { vertical: VerticalKey }) {
   const v = verticals[vertical];
@@ -10,8 +11,8 @@ export default function Header({ vertical }: { vertical: VerticalKey }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
         {/* 워드마크 + 현재 버티컬 태그 */}
         <div className="flex items-center gap-3">
-          <Link href={`/${vertical}`} className="text-xl font-extrabold tracking-tight">
-            GOLGIUS
+          <Link href={`/${vertical}`} aria-label="GOLGIUS 홈">
+            <Brandmark size="md" />
           </Link>
           <span
             className="rounded-full px-2.5 py-1 text-xs font-semibold"

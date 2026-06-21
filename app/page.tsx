@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { verticals, type VerticalKey } from "@/lib/verticals";
+import Brandmark from "@/components/Brandmark";
 
 // 단일 도메인 진입점. 방문자를 헬스장/병원 버티컬로 안내.
 // (운영 시 광고 랜딩은 /gym, /hospital 로 직접 유입되는 경우가 많음)
@@ -9,8 +10,8 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col">
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-10">
-        <div className="flex items-center gap-3">
-          <span className="text-xl font-extrabold tracking-tight">GOLGIUS</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <Brandmark size="md" />
           <span className="text-sm text-dim">Your success is our career</span>
         </div>
 
