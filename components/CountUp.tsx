@@ -45,6 +45,7 @@ export default function CountUp({
     if (!el) return;
 
     let raf = 0;
+    let safety: ReturnType<typeof setTimeout>;
     const run = () => {
       if (started.current) return;
       started.current = true;
@@ -54,8 +55,13 @@ export default function CountUp({
         const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic — 룰렛이 멈추듯 감속
         setDisplay(fmt(Math.round(eased * num)));
         if (t < 1) raf = requestAnimationFrame(tick);
-        else setDisplay(fmt(num));
+        else {
+          clearTimeout(safety);
+          setDisplay(fmt(num));
+        }
       };
+      // 안전장치: RAF가 throttle/정지되더라도(백그라운드 탭 등) 최종값은 반드시 표시
+      safety = setTimeout(() => setDisplay(fmt(num)), durationMs + 400);
       raf = requestAnimationFrame(tick);
     };
 
@@ -70,9 +76,22 @@ export default function CountUp({
     );
     io.observe(el);
 
+    // 이미 화면 안에 있으면(예: 첫 화면 히어로) 초기 콜백을 기다리지 않고 바로 시작.
+    // 레이아웃 확정 후 측정하도록 한 박자 늦춘다.
+    const kick = setTimeout(() => {
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      if (rect.top < vh * 0.9 && rect.bottom > 0) {
+        run();
+        io.disconnect();
+      }
+    }, 80);
+
     return () => {
       io.disconnect();
       cancelAnimationFrame(raf);
+      clearTimeout(safety);
+      clearTimeout(kick);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
