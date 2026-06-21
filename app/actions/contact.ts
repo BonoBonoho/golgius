@@ -1,6 +1,7 @@
 "use server";
 
 import { addLead } from "@/lib/leads";
+import { notifyNewLead } from "@/lib/notify";
 import type { VerticalKey } from "@/lib/verticals";
 
 export interface ContactState {
@@ -9,6 +10,7 @@ export interface ContactState {
 }
 
 const PHONE_RE = /^[0-9+\-\s()]{7,20}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function submitContact(
   _prev: ContactState,
@@ -16,6 +18,8 @@ export async function submitContact(
 ): Promise<ContactState> {
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const region = String(formData.get("region") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
   const verticalRaw = String(formData.get("vertical") ?? "");
   const vertical: VerticalKey = verticalRaw === "hospital" ? "hospital" : "gym";
@@ -31,12 +35,17 @@ export async function submitContact(
   if (!PHONE_RE.test(phone)) {
     return { ok: false, message: "연락처를 정확히 입력해 주세요." };
   }
+  if (email && !EMAIL_RE.test(email)) {
+    return { ok: false, message: "이메일 형식이 올바르지 않습니다." };
+  }
   if (message.length > 1000) {
     return { ok: false, message: "문의 내용이 너무 깁니다(최대 1000자)." };
   }
 
   try {
-    await addLead({ name, phone, message, vertical });
+    const lead = await addLead({ name, phone, email, region, message, vertical });
+    // 알림은 접수 성공과 분리 — 실패해도 사용자에겐 성공 응답(내부 allSettled)
+    await notifyNewLead(lead);
   } catch {
     return {
       ok: false,

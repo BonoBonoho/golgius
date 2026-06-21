@@ -56,6 +56,24 @@ export default function ContactForm({ vertical, cta }: { vertical: VerticalKey; 
             className="mt-1.5 w-full rounded-lg border border-line bg-base px-4 py-3 text-sm outline-none transition focus:border-[var(--accent)]"
           />
         </label>
+        <label className="block">
+          <span className="text-sm text-dim">이메일 (선택)</span>
+          <input
+            name="email"
+            type="email"
+            placeholder="name@example.com"
+            className="mt-1.5 w-full rounded-lg border border-line bg-base px-4 py-3 text-sm outline-none transition focus:border-[var(--accent)]"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm text-dim">희망 지역 (선택)</span>
+          <input
+            name="region"
+            type="text"
+            placeholder="예: 서울 강남구"
+            className="mt-1.5 w-full rounded-lg border border-line bg-base px-4 py-3 text-sm outline-none transition focus:border-[var(--accent)]"
+          />
+        </label>
       </div>
 
       <label className="mt-4 block">

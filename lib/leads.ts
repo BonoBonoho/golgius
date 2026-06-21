@@ -6,20 +6,46 @@
 //   NEXT_PUBLIC_SUPABASE_URL      Supabase 프로젝트 URL
 //   SUPABASE_SERVICE_ROLE_KEY     서버 전용 키(RLS 우회, 절대 클라이언트 노출 금지)
 //
-// 테이블(public.leads) 생성 SQL은 README / 설정 안내 참고.
+// 테이블(public.leads, public.lead_events) 생성 SQL은 supabase/schema.sql 참고.
 
 import type { VerticalKey } from "@/lib/verticals";
 
+export type Stage =
+  | "inquiry"
+  | "consult"
+  | "quote"
+  | "contract"
+  | "open"
+  | "lost";
+
 export interface Lead {
   id: string;
+  vertical: VerticalKey;
   name: string;
   phone: string;
+  email: string;
+  region: string;
   message: string;
-  vertical: VerticalKey;
+  source: string;
+  stage: Stage;
+  assignee: string;
   createdAt: string; // ISO
+  updatedAt: string; // ISO
 }
 
+// 폼에서 새 리드 생성 시 받는 입력
+export type NewLead = {
+  vertical: VerticalKey;
+  name: string;
+  phone: string;
+  email?: string;
+  region?: string;
+  message?: string;
+  source?: string;
+};
+
 const TABLE = "leads";
+const EVENTS = "lead_events";
 
 function supabaseEnv() {
   const url =
@@ -37,15 +63,24 @@ function headers(key: string, extra: Record<string, string> = {}) {
   };
 }
 
+const STAGES: Stage[] = ["inquiry", "consult", "quote", "contract", "open", "lost"];
+
 // DB row(snake_case) → Lead
 function toLead(r: Record<string, unknown>): Lead {
+  const stage = STAGES.includes(r.stage as Stage) ? (r.stage as Stage) : "inquiry";
   return {
     id: String(r.id),
+    vertical: (r.vertical === "hospital" ? "hospital" : "gym") as VerticalKey,
     name: String(r.name ?? ""),
     phone: String(r.phone ?? ""),
+    email: String(r.email ?? ""),
+    region: String(r.region ?? ""),
     message: String(r.message ?? ""),
-    vertical: (r.vertical === "hospital" ? "hospital" : "gym") as VerticalKey,
+    source: String(r.source ?? "direct"),
+    stage,
+    assignee: String(r.assignee ?? ""),
     createdAt: String(r.created_at ?? new Date().toISOString()),
+    updatedAt: String(r.updated_at ?? r.created_at ?? new Date().toISOString()),
   };
 }
 
@@ -57,9 +92,7 @@ export function isPersistent(): boolean {
   return supabaseEnv() !== null;
 }
 
-export async function addLead(
-  input: Omit<Lead, "id" | "createdAt">
-): Promise<Lead> {
+export async function addLead(input: NewLead): Promise<Lead> {
   const env = supabaseEnv();
 
   if (env) {
@@ -67,26 +100,61 @@ export async function addLead(
       method: "POST",
       headers: headers(env.key, { Prefer: "return=representation" }),
       body: JSON.stringify({
+        vertical: input.vertical,
         name: input.name,
         phone: input.phone,
-        message: input.message,
-        vertical: input.vertical,
+        email: input.email ?? null,
+        region: input.region ?? null,
+        message: input.message ?? "",
+        source: input.source ?? "direct",
       }),
       cache: "no-store",
     });
     if (!res.ok) throw new Error(`supabase insert ${res.status}`);
     const rows = (await res.json()) as Record<string, unknown>[];
-    return toLead(rows[0]);
+    const lead = toLead(rows[0]);
+    // 단계 이력 첫 기록(인사이트용) — 실패해도 접수는 성공으로 둔다
+    void recordEvent(env, lead.id, null, "inquiry", "문의 접수");
+    return lead;
   }
 
   // 폴백: 메모리
+  const now = new Date().toISOString();
   const lead: Lead = {
-    ...input,
     id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
+    vertical: input.vertical,
+    name: input.name,
+    phone: input.phone,
+    email: input.email ?? "",
+    region: input.region ?? "",
+    message: input.message ?? "",
+    source: input.source ?? "direct",
+    stage: "inquiry",
+    assignee: "",
+    createdAt: now,
+    updatedAt: now,
   };
   mem.unshift(lead);
   return lead;
+}
+
+async function recordEvent(
+  env: { url: string; key: string },
+  leadId: string,
+  from: Stage | null,
+  to: Stage,
+  note: string
+): Promise<void> {
+  try {
+    await fetch(`${env.url}/rest/v1/${EVENTS}`, {
+      method: "POST",
+      headers: headers(env.key, { Prefer: "return=minimal" }),
+      body: JSON.stringify({ lead_id: leadId, from_stage: from, to_stage: to, note }),
+      cache: "no-store",
+    });
+  } catch {
+    // 인사이트용 부가 기록 — 실패는 무시
+  }
 }
 
 export async function getLeads(): Promise<Lead[]> {

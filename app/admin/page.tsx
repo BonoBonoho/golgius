@@ -1,5 +1,5 @@
 import { isAuthed, adminPassword } from "@/lib/admin";
-import { getLeads, isPersistent } from "@/lib/leads";
+import { getLeads, isPersistent, type Stage } from "@/lib/leads";
 import { logout } from "@/app/actions/admin";
 import { verticals } from "@/lib/verticals";
 import AdminLogin from "./AdminLogin";
@@ -11,6 +11,15 @@ const fmt = new Intl.DateTimeFormat("ko-KR", {
   timeStyle: "short",
   timeZone: "Asia/Seoul",
 });
+
+const STAGE_LABEL: Record<Stage, string> = {
+  inquiry: "문의",
+  consult: "상담예약",
+  quote: "견적발송",
+  contract: "계약",
+  open: "오픈완료",
+  lost: "보류·이탈",
+};
 
 export default async function AdminPage() {
   if (!(await isAuthed())) {
@@ -51,8 +60,10 @@ export default async function AdminPage() {
               <tr>
                 <th className="whitespace-nowrap px-4 py-3 font-semibold">접수일시</th>
                 <th className="whitespace-nowrap px-4 py-3 font-semibold">분야</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">단계</th>
                 <th className="whitespace-nowrap px-4 py-3 font-semibold">이름</th>
                 <th className="whitespace-nowrap px-4 py-3 font-semibold">연락처</th>
+                <th className="whitespace-nowrap px-4 py-3 font-semibold">지역</th>
                 <th className="px-4 py-3 font-semibold">문의 내용</th>
               </tr>
             </thead>
@@ -65,12 +76,21 @@ export default async function AdminPage() {
                   <td className="whitespace-nowrap px-4 py-3">
                     {verticals[l.vertical]?.label ?? l.vertical}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 font-semibold">{l.name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-dim">
+                    {STAGE_LABEL[l.stage] ?? l.stage}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 font-semibold">
+                    {l.name}
+                    {l.email && (
+                      <span className="block font-normal text-dim">{l.email}</span>
+                    )}
+                  </td>
                   <td className="whitespace-nowrap px-4 py-3">
                     <a href={`tel:${l.phone.replace(/[^0-9+]/g, "")}`} className="text-gold hover:opacity-80">
                       {l.phone}
                     </a>
                   </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-dim">{l.region || "—"}</td>
                   <td className="px-4 py-3 text-dim">{l.message || "—"}</td>
                 </tr>
               ))}
