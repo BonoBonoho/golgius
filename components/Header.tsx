@@ -23,12 +23,12 @@ export default function Header({ vertical }: { vertical: VerticalKey }) {
 
         {/* 내비게이션 (Phase 2에서 섹션 앵커 연결) */}
         <nav className="hidden items-center gap-7 text-sm text-dim md:flex">
+          <a href="#cases" className="transition hover:text-ink">실적</a>
           <a href="#strengths" className="transition hover:text-ink">강점</a>
           {v.offerings.length > 0 && (
             <a href="#offerings" className="transition hover:text-ink">취급 품목</a>
           )}
           <a href="#process" className="transition hover:text-ink">진행 과정</a>
-          <a href="#cases" className="transition hover:text-ink">실적</a>
           <Link href={`/${other.key}`} className="transition hover:text-ink">
             {other.label} 보기
           </Link>

@@ -11,10 +11,10 @@ export default function GymPage() {
   return (
     <VerticalShell vertical="gym">
       <Hero vertical="gym" />
+      <Cases vertical="gym" />
       <Strengths vertical="gym" />
       <Offerings vertical="gym" />
       <Process vertical="gym" />
-      <Cases vertical="gym" />
       <Reviews vertical="gym" />
       <ContactCTA vertical="gym" />
     </VerticalShell>

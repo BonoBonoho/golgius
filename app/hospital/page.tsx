@@ -10,9 +10,9 @@ export default function HospitalPage() {
   return (
     <VerticalShell vertical="hospital">
       <Hero vertical="hospital" />
+      <Cases vertical="hospital" />
       <Strengths vertical="hospital" />
       <Process vertical="hospital" />
-      <Cases vertical="hospital" />
       <Reviews vertical="hospital" />
       <ContactCTA vertical="hospital" />
     </VerticalShell>
