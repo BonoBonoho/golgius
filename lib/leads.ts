@@ -1,10 +1,12 @@
 // 문의 접수(리드) 저장소.
-// 운영(Vercel): Upstash Redis(KV) REST API에 영구 저장.
+// 운영(Vercel): Supabase Postgres 테이블에 영구 저장 (PostgREST REST API).
 // 로컬/미설정: 메모리 폴백 — 서버 재시작 시 사라짐(테스트용).
 //
-// 필요한 환경변수(Vercel Storage > Upstash Redis 연결 시 자동 주입):
-//   UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN
-//   (또는 레거시 KV_REST_API_URL / KV_REST_API_TOKEN)
+// 필요한 환경변수:
+//   NEXT_PUBLIC_SUPABASE_URL      Supabase 프로젝트 URL
+//   SUPABASE_SERVICE_ROLE_KEY     서버 전용 키(RLS 우회, 절대 클라이언트 노출 금지)
+//
+// 테이블(public.leads) 생성 SQL은 README / 설정 안내 참고.
 
 import type { VerticalKey } from "@/lib/verticals";
 
@@ -17,33 +19,34 @@ export interface Lead {
   createdAt: string; // ISO
 }
 
-const KEY = "golgius:leads";
+const TABLE = "leads";
 
-function redisEnv() {
+function supabaseEnv() {
   const url =
-    process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL ?? "";
-  const token =
-    process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN ?? "";
-  return url && token ? { url, token } : null;
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  return url && key ? { url: url.replace(/\/$/, ""), key } : null;
 }
 
-// Upstash REST: 단일 커맨드를 POST 본문(JSON 배열)으로 전송
-async function redisCmd(cmd: (string | number)[]): Promise<unknown> {
-  const env = redisEnv();
-  if (!env) throw new Error("no-redis");
-  const res = await fetch(env.url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(cmd),
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`upstash ${res.status}`);
-  const data = (await res.json()) as { result?: unknown; error?: string };
-  if (data.error) throw new Error(data.error);
-  return data.result;
+function headers(key: string, extra: Record<string, string> = {}) {
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+    ...extra,
+  };
+}
+
+// DB row(snake_case) → Lead
+function toLead(r: Record<string, unknown>): Lead {
+  return {
+    id: String(r.id),
+    name: String(r.name ?? ""),
+    phone: String(r.phone ?? ""),
+    message: String(r.message ?? ""),
+    vertical: (r.vertical === "hospital" ? "hospital" : "gym") as VerticalKey,
+    createdAt: String(r.created_at ?? new Date().toISOString()),
+  };
 }
 
 // ── 메모리 폴백 (dev) ── 핫리로드에도 유지되도록 globalThis에 보관
@@ -51,38 +54,53 @@ const mem: Lead[] = ((globalThis as Record<string, unknown>).__golgiusLeads ??=
   []) as Lead[];
 
 export function isPersistent(): boolean {
-  return redisEnv() !== null;
+  return supabaseEnv() !== null;
 }
 
 export async function addLead(
   input: Omit<Lead, "id" | "createdAt">
 ): Promise<Lead> {
+  const env = supabaseEnv();
+
+  if (env) {
+    const res = await fetch(`${env.url}/rest/v1/${TABLE}`, {
+      method: "POST",
+      headers: headers(env.key, { Prefer: "return=representation" }),
+      body: JSON.stringify({
+        name: input.name,
+        phone: input.phone,
+        message: input.message,
+        vertical: input.vertical,
+      }),
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`supabase insert ${res.status}`);
+    const rows = (await res.json()) as Record<string, unknown>[];
+    return toLead(rows[0]);
+  }
+
+  // 폴백: 메모리
   const lead: Lead = {
     ...input,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
   };
-
-  if (isPersistent()) {
-    await redisCmd(["LPUSH", KEY, JSON.stringify(lead)]);
-  } else {
-    mem.unshift(lead);
-  }
+  mem.unshift(lead);
   return lead;
 }
 
 export async function getLeads(): Promise<Lead[]> {
-  if (isPersistent()) {
-    const raw = (await redisCmd(["LRANGE", KEY, 0, -1])) as string[];
-    return raw
-      .map((s) => {
-        try {
-          return JSON.parse(s) as Lead;
-        } catch {
-          return null;
-        }
-      })
-      .filter((l): l is Lead => l !== null);
+  const env = supabaseEnv();
+
+  if (env) {
+    const res = await fetch(
+      `${env.url}/rest/v1/${TABLE}?select=*&order=created_at.desc`,
+      { headers: headers(env.key), cache: "no-store" }
+    );
+    if (!res.ok) throw new Error(`supabase select ${res.status}`);
+    const rows = (await res.json()) as Record<string, unknown>[];
+    return rows.map(toLead);
   }
+
   return mem;
 }

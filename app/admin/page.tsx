@@ -28,7 +28,7 @@ export default async function AdminPage() {
             총 {leads.length}건
             {!isPersistent() && (
               <span style={{ color: "#e2574a" }}>
-                {" "}· 임시 저장(메모리) — Upstash Redis 연결 시 영구 보관됩니다
+                {" "}· 임시 저장(메모리) — Supabase 연결 시 영구 보관됩니다
               </span>
             )}
           </p>
