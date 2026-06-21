@@ -62,7 +62,12 @@ export default function ContactCTA({ vertical }: { vertical: VerticalKey }) {
           </div>
 
           {/* 우: 문의 폼 */}
-          <ContactForm vertical={vertical} cta={v.hero.cta} />
+          <ContactForm
+            vertical={vertical}
+            cta={v.hero.cta}
+            centerLabel={v.label}
+            interests={v.offerings.map((o) => o.title)}
+          />
         </div>
       </div>
     </section>

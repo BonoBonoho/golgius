@@ -20,6 +20,12 @@ export async function submitContact(
   const phone = String(formData.get("phone") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const region = String(formData.get("region") ?? "").trim();
+  const center = String(formData.get("center") ?? "").trim().slice(0, 80);
+  const interests = formData
+    .getAll("interest")
+    .map((v) => String(v).trim())
+    .filter(Boolean)
+    .slice(0, 20);
   const message = String(formData.get("message") ?? "").trim();
   const verticalRaw = String(formData.get("vertical") ?? "");
   const vertical: VerticalKey = verticalRaw === "hospital" ? "hospital" : "gym";
@@ -42,8 +48,17 @@ export async function submitContact(
     return { ok: false, message: "문의 내용이 너무 깁니다(최대 1000자)." };
   }
 
+  // 업체명·관심 품목을 문의 내용에 구조화해 담는다(스키마 변경 없이 어드민에서 확인)
+  const fullMessage = [
+    center ? `[업체명] ${center}` : "",
+    interests.length ? `[관심 품목] ${interests.join(", ")}` : "",
+    message,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   try {
-    const lead = await addLead({ name, phone, email, region, message, vertical });
+    const lead = await addLead({ name, phone, email, region, message: fullMessage, vertical });
     // 알림은 접수 성공과 분리 — 실패해도 사용자에겐 성공 응답(내부 allSettled)
     await notifyNewLead(lead);
   } catch {
