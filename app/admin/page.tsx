@@ -6,6 +6,7 @@ import { logout } from "@/app/actions/admin";
 import { moveStage } from "@/app/actions/leads";
 import { verticals } from "@/lib/verticals";
 import AdminLogin from "./AdminLogin";
+import DeleteLeadButton from "@/components/admin/DeleteLeadButton";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,7 @@ function MoveButtons({ lead }: { lead: Lead }) {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string }>;
+  searchParams: Promise<{ days?: string; view?: string }>;
 }) {
   if (!(await isAuthed())) {
     return <AdminLogin configured={adminPassword() !== null} />;
@@ -88,6 +89,7 @@ export default async function AdminPage({
 
   const sp = await searchParams;
   const days = sp.days === "7" || sp.days === "30" ? Number(sp.days) : null;
+  const view: "board" | "table" = sp.view === "table" ? "table" : "board";
 
   const all = await getLeads();
   const leads = days
@@ -95,19 +97,29 @@ export default async function AdminPage({
     : all;
 
   const ins = computeInsights(leads);
-  const periodLink = (v: string, label: string) => (
-    <Link
-      href={v === "all" ? "/admin" : `/admin?days=${v}`}
-      className="rounded-full border px-3 py-1 text-xs font-semibold transition"
-      style={
-        (v === "all" ? days === null : String(days) === v)
-          ? { color: "var(--accent)", borderColor: "var(--accent)" }
-          : { color: "var(--color-dim)", borderColor: "var(--color-line)" }
-      }
-    >
-      {label}
-    </Link>
-  );
+
+  const hrefWith = (d: number | null, v: "board" | "table") => {
+    const p = new URLSearchParams();
+    if (d) p.set("days", String(d));
+    if (v === "table") p.set("view", "table");
+    const s = p.toString();
+    return `/admin${s ? `?${s}` : ""}`;
+  };
+  const chip = (active: boolean) =>
+    "rounded-full border px-3 py-1 text-xs font-semibold transition";
+  const chipStyle = (active: boolean) =>
+    active
+      ? { color: "var(--accent)", borderColor: "var(--accent)" }
+      : { color: "var(--color-dim)", borderColor: "var(--color-line)" };
+
+  const periodLink = (v: string, label: string) => {
+    const active = v === "all" ? days === null : String(days) === v;
+    return (
+      <Link href={hrefWith(v === "all" ? null : Number(v), view)} className={chip(active)} style={chipStyle(active)}>
+        {label}
+      </Link>
+    );
+  };
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
@@ -128,11 +140,28 @@ export default async function AdminPage({
           {periodLink("all", "전체")}
           {periodLink("30", "30일")}
           {periodLink("7", "7일")}
+          {/* 보기 전환 */}
+          <span className="mx-1 inline-flex overflow-hidden rounded-full border border-line">
+            <Link
+              href={hrefWith(days, "board")}
+              className="px-3 py-1 text-xs font-semibold transition"
+              style={view === "board" ? { backgroundColor: "var(--accent)", color: "var(--color-base)" } : { color: "var(--color-dim)" }}
+            >
+              보드
+            </Link>
+            <Link
+              href={hrefWith(days, "table")}
+              className="px-3 py-1 text-xs font-semibold transition"
+              style={view === "table" ? { backgroundColor: "var(--accent)", color: "var(--color-base)" } : { color: "var(--color-dim)" }}
+            >
+              테이블
+            </Link>
+          </span>
           <a
             href="/admin/export"
             className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
           >
-            CSV
+            엑셀 다운로드
           </a>
           <Link
             href="/admin/orders"
@@ -230,6 +259,7 @@ export default async function AdminPage({
           </section>
 
           {/* 칸반 보드 */}
+          {view === "board" ? (
           <section className="mt-8 overflow-x-auto pb-2">
             <div className="flex gap-4">
               {BOARD.map((stage) => {
@@ -264,9 +294,12 @@ export default async function AdminPage({
                               접수 {daysSince(lead.createdAt)}일 전 · 현재단계 {daysSince(lead.updatedAt)}일
                             </p>
                             {lead.message && (
-                              <p className="mt-2 line-clamp-3 text-xs text-dim">{lead.message}</p>
+                              <p className="mt-2 whitespace-pre-line text-xs text-dim">{lead.message}</p>
                             )}
                             <MoveButtons lead={lead} />
+                            <div className="mt-2 flex justify-end">
+                              <DeleteLeadButton id={lead.id} />
+                            </div>
                           </div>
                         ))
                       )}
@@ -276,6 +309,46 @@ export default async function AdminPage({
               })}
             </div>
           </section>
+          ) : (
+          /* 테이블 보기 */
+          <section className="mt-8 overflow-x-auto rounded-2xl border border-line">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-surface text-dim">
+                <tr>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">접수일시</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">단계</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">분야</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">이름</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">연락처</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-semibold">지역</th>
+                  <th className="px-4 py-3 font-semibold">업체명 · 관심 품목 · 문의</th>
+                  <th className="px-4 py-3 font-semibold">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map((lead) => (
+                  <tr key={lead.id} className="border-t border-line align-top">
+                    <td className="whitespace-nowrap px-4 py-3 text-dim">{fmt.format(new Date(lead.createdAt))}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-dim">{STAGE_LABEL[lead.stage]}</td>
+                    <td className="whitespace-nowrap px-4 py-3">{verticals[lead.vertical]?.label ?? lead.vertical}</td>
+                    <td className="whitespace-nowrap px-4 py-3 font-semibold">
+                      {lead.name}
+                      {lead.email && <span className="block font-normal text-dim">{lead.email}</span>}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <a href={`tel:${lead.phone.replace(/[^0-9+]/g, "")}`} className="text-gold hover:opacity-80">
+                        {lead.phone}
+                      </a>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-dim">{lead.region || "—"}</td>
+                    <td className="px-4 py-3 text-dim"><span className="whitespace-pre-line">{lead.message || "—"}</span></td>
+                    <td className="px-4 py-3"><DeleteLeadButton id={lead.id} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+          )}
         </>
       )}
     </main>

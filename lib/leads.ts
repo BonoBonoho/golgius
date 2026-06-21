@@ -188,6 +188,21 @@ export async function updateLeadStage(
   }
 }
 
+export async function deleteLead(id: string): Promise<void> {
+  const env = supabaseEnv();
+  if (env) {
+    const res = await fetch(`${env.url}/rest/v1/${TABLE}?id=eq.${id}`, {
+      method: "DELETE",
+      headers: headers(env.key, { Prefer: "return=minimal" }),
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`supabase delete ${res.status}`);
+    return;
+  }
+  const i = mem.findIndex((l) => l.id === id);
+  if (i >= 0) mem.splice(i, 1);
+}
+
 export async function getLeads(): Promise<Lead[]> {
   const env = supabaseEnv();
 

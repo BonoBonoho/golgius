@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isAuthed } from "@/lib/admin";
-import { updateLeadStage, type Stage } from "@/lib/leads";
+import { updateLeadStage, deleteLead as removeLead, type Stage } from "@/lib/leads";
 
 const VALID: Stage[] = ["inquiry", "consult", "quote", "contract", "open", "lost"];
 
@@ -16,5 +16,13 @@ export async function moveStage(formData: FormData): Promise<void> {
   if (!id || !VALID.includes(to) || from === to) return;
 
   await updateLeadStage(id, from, to);
+  revalidatePath("/admin");
+}
+
+export async function deleteLead(formData: FormData): Promise<void> {
+  if (!(await isAuthed())) return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  await removeLead(id);
   revalidatePath("/admin");
 }
