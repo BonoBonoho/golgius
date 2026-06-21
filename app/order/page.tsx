@@ -31,6 +31,13 @@ export default function OrderPage() {
           담당자가 견적을 빠르게 안내해 드립니다.
         </p>
 
+        <Link
+          href="/order/design"
+          className="mt-6 inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-gold transition hover:border-gold"
+        >
+          로고 올려 미리보며 디자인하기 →
+        </Link>
+
         <div className="mt-10">
           <OrderForm />
         </div>
