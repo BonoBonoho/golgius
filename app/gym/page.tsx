@@ -2,6 +2,7 @@ import VerticalShell from "@/components/VerticalShell";
 import Hero from "@/components/Hero";
 import Strengths from "@/components/sections/Strengths";
 import Offerings from "@/components/sections/Offerings";
+import ApparelCTA from "@/components/sections/ApparelCTA";
 import Process from "@/components/sections/Process";
 import Cases from "@/components/sections/Cases";
 import Reviews from "@/components/sections/Reviews";
@@ -14,6 +15,7 @@ export default function GymPage() {
       <Cases vertical="gym" />
       <Strengths vertical="gym" />
       <Offerings vertical="gym" />
+      <ApparelCTA />
       <Process vertical="gym" />
       <Reviews vertical="gym" />
       <ContactCTA vertical="gym" />
