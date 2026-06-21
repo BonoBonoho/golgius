@@ -230,7 +230,7 @@ Supabase Auth로 로그인(골지어스 내부 직원만).
 - [x] **Phase 6 — 발주 폼 (7-A)** ⬅ MVP (완료)
   `/order` 발주 폼(품목·옵션·시안 업로드) → `/api/order` → `orders` 적재 + Supabase Storage(order-files 비공개 버킷) + 담당자 알림(notifyNewOrder). `/admin/orders`에서 상태(접수→견적→확정→제작) 관리 + 서명 URL로 시안 조회.
 - [x] **Phase 7 — 디자인 미리보기 (7-B)** (완료)
-  `/order/design` 디자인 스튜디오 — 제품(티셔츠/수건)·색상 선택, 로고 업로드 후 드래그 배치·크기 조정 실시간 미리보기. 제출 시 캔버스 합성 PNG를 생성해 발주 시안으로 첨부(의존성 없이 순수 React+Canvas).
+  `/order/design` 디자인 스튜디오 — 면별(티셔츠 앞/뒤, 바지, 수건) 독립 디자인, 색상·로고 업로드·드래그 배치·크기 조정 실시간 미리보기. 제출 시 디자인한 면들을 한 장의 캔버스 합성 PNG로 합쳐 발주 시안으로 첨부(의존성 없이 순수 React+Canvas).
 
 ---
 

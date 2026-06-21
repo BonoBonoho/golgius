@@ -6,7 +6,6 @@ export const dynamic = "force-dynamic";
 
 const PHONE_RE = /^[0-9+\-\s()]{7,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PRODUCTS = ["운동복", "수건", "기타"];
 const MAX_BYTES = 4 * 1024 * 1024; // 4MB (서버리스 본문 한도 고려)
 
 function json(body: unknown, status = 200) {
@@ -43,7 +42,7 @@ export async function POST(req: Request) {
   if (name.length < 2) return json({ ok: false, message: "이름을 2자 이상 입력해 주세요." }, 400);
   if (!PHONE_RE.test(phone)) return json({ ok: false, message: "연락처를 정확히 입력해 주세요." }, 400);
   if (email && !EMAIL_RE.test(email)) return json({ ok: false, message: "이메일 형식이 올바르지 않습니다." }, 400);
-  if (!PRODUCTS.includes(productType)) return json({ ok: false, message: "품목을 선택해 주세요." }, 400);
+  if (!productType || productType.length > 80) return json({ ok: false, message: "품목을 선택해 주세요." }, 400);
   if (message.length > 1000) return json({ ok: false, message: "요청 내용이 너무 깁니다." }, 400);
 
   // 시안 파일(선택)
