@@ -14,11 +14,15 @@ export interface Partner {
 
 export const partners: Record<VerticalKey, Partner[]> = {
   gym: [
-    { name: "SENSE GYM", src: "/partners/sense-gym.svg" },
-    { name: "RAPS FITNESS 24/365", src: "/partners/rapsfitness.svg" },
-    { name: "UrbanField", src: "/partners/urbanfield.svg" },
-    { name: "파트너 센터", src: "/partners/mask.svg" },
-    { name: "BODY CHANNEL", src: "/partners/bodychannel.svg" },
+    { name: "Able GYM", src: "/partners/able-gym.png" },
+    { name: "BE:MOVE FITNESS", src: "/partners/bemove-fitness.png" },
+    { name: "HEALTH BOY GYM", src: "/partners/healthboy-gym.png" },
+    { name: "MIND FITNESS", src: "/partners/mind-fitness.png" },
+    { name: "BODY CHANNEL", src: "/partners/bodychannel.png" },
+    { name: "파트너 센터", src: "/partners/mask.png" },
+    { name: "UrbanField", src: "/partners/urbanfield.png" },
+    { name: "RAPS FITNESS 24/365", src: "/partners/rapsfitness.png" },
+    { name: "SENSE GYM", src: "/partners/sense-gym.png" },
   ],
   hospital: [],
 };

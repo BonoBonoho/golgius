@@ -10,7 +10,6 @@ function Tile({ p }: { p: Partner }) {
       <img
         src={p.src}
         alt={p.name}
-        loading="lazy"
         className="max-h-12 w-auto max-w-full object-contain"
       />
     </div>
