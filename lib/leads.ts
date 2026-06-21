@@ -47,6 +47,9 @@ export type NewLead = {
 const TABLE = "leads";
 const EVENTS = "lead_events";
 
+// 파이프라인 단계 순서 ('lost'는 별도)
+export const PIPELINE: Stage[] = ["inquiry", "consult", "quote", "contract", "open"];
+
 function supabaseEnv() {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
@@ -154,6 +157,34 @@ async function recordEvent(
     });
   } catch {
     // 인사이트용 부가 기록 — 실패는 무시
+  }
+}
+
+// 단계 변경 + 이력 기록
+export async function updateLeadStage(
+  id: string,
+  from: Stage,
+  to: Stage
+): Promise<void> {
+  const env = supabaseEnv();
+  const now = new Date().toISOString();
+
+  if (env) {
+    const res = await fetch(`${env.url}/rest/v1/${TABLE}?id=eq.${id}`, {
+      method: "PATCH",
+      headers: headers(env.key, { Prefer: "return=minimal" }),
+      body: JSON.stringify({ stage: to, updated_at: now }),
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`supabase update ${res.status}`);
+    void recordEvent(env, id, from, to, `단계 변경: ${from} → ${to}`);
+    return;
+  }
+
+  const lead = mem.find((l) => l.id === id);
+  if (lead) {
+    lead.stage = to;
+    lead.updatedAt = now;
   }
 }
 

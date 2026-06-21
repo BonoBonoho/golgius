@@ -222,8 +222,9 @@ Supabase Auth로 로그인(골지어스 내부 직원만).
   Hero → 신뢰(실적) → 강점 → (가격/프로세스) → 후기 → 문의 CTA 섹션. 한 컴포넌트 세트로 양쪽 렌더. 모바일 반응형.
 - [ ] **Phase 3 — 문의 폼 + DB + 이메일/문자 알림** ⬅ MVP (진행 중)
   Supabase `leads`/`lead_events` 생성, `/api/inquiry`, `/lib/notify.ts`(이메일·문자), 폼 검증.
-- [ ] **Phase 4 — 관리자 CRM** ⬅ MVP
-  Supabase Auth, `/admin` 칸반 보드, 단계 이동 이력, 인사이트 패널.
+- [x] **Phase 4 — 관리자 CRM** ⬅ MVP (코어 완료)
+  `/admin` 칸반 보드(단계 이동 버튼 → `lead_events` 기록), 인사이트 패널(퍼널 전환율·정체 리드·분야/유입), 기간 필터, CSV 내보내기.
+  ※ 인증은 현재 단일 비밀번호 유지(스펙의 Supabase Auth 다중직원은 보류). 단계 이동은 DnD 대신 버튼(모바일·안정성). 둘 다 추후 보강 가능.
 - [ ] **Phase 5 — 카카오 알림톡** ⬅ MVP (외부 승인 게이트)
   채널·템플릿 승인 완료 후 `sendAlimtalk` 추가. 승인 전엔 이메일+문자만으로 출시 후 끼워넣기.
 - [ ] **Phase 6 — 발주 폼 (7-A)** ⬅ MVP
