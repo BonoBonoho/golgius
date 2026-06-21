@@ -25,7 +25,7 @@ export async function submitContact(
     .getAll("interest")
     .map((v) => String(v).trim())
     .filter(Boolean)
-    .slice(0, 20);
+    .slice(0, 50);
   const message = String(formData.get("message") ?? "").trim();
   const verticalRaw = String(formData.get("vertical") ?? "");
   const vertical: VerticalKey = verticalRaw === "hospital" ? "hospital" : "gym";

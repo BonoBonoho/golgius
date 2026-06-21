@@ -66,7 +66,7 @@ export default function ContactCTA({ vertical }: { vertical: VerticalKey }) {
             vertical={vertical}
             cta={v.hero.cta}
             centerLabel={v.label}
-            interests={v.offerings.map((o) => o.title)}
+            offerings={v.offerings}
           />
         </div>
       </div>
