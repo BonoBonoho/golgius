@@ -135,6 +135,12 @@ export default async function AdminPage({
             CSV
           </a>
           <Link
+            href="/admin/orders"
+            className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
+          >
+            발주 요청
+          </Link>
+          <Link
             href="/admin/settings"
             className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
           >

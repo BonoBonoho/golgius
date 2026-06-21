@@ -227,8 +227,8 @@ Supabase Auth로 로그인(골지어스 내부 직원만).
   ※ 인증은 현재 단일 비밀번호 유지(스펙의 Supabase Auth 다중직원은 보류). 단계 이동은 DnD 대신 버튼(모바일·안정성). 둘 다 추후 보강 가능.
 - [ ] **Phase 5 — 카카오 알림톡** ⬅ MVP (외부 승인 게이트)
   채널·템플릿 승인 완료 후 `sendAlimtalk` 추가. 승인 전엔 이메일+문자만으로 출시 후 끼워넣기.
-- [ ] **Phase 6 — 발주 폼 (7-A)** ⬅ MVP
-  `orders`, 파일 업로드, 발주 알림, 관리자 발주 상태 관리.
+- [x] **Phase 6 — 발주 폼 (7-A)** ⬅ MVP (완료)
+  `/order` 발주 폼(품목·옵션·시안 업로드) → `/api/order` → `orders` 적재 + Supabase Storage(order-files 비공개 버킷) + 담당자 알림(notifyNewOrder). `/admin/orders`에서 상태(접수→견적→확정→제작) 관리 + 서명 URL로 시안 조회.
 - [ ] **Phase 7 — 디자인 미리보기 (7-B)** — 출시 직후 패스트팔로우
 
 ---

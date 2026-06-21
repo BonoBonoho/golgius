@@ -9,6 +9,7 @@
 
 import { createHmac, randomBytes } from "crypto";
 import type { Lead } from "@/lib/leads";
+import type { Order } from "@/lib/orders";
 import { verticals } from "@/lib/verticals";
 import { getNotifyConfig, type NotifyConfig } from "@/lib/settings";
 
@@ -139,4 +140,42 @@ export async function notifyNewLead(lead: Lead): Promise<void> {
     sendSms(lead, cfg),
     // sendAlimtalk(lead, cfg),  // Phase 5
   ]);
+}
+
+// ── 신규 발주 알림 ──────────────────────────────────────
+async function orderEmail(order: Order, cfg: NotifyConfig): Promise<void> {
+  const apiKey = cfg.resendApiKey;
+  const notifyTo = cfg.notifyEmail;
+  if (!apiKey || !notifyTo) return;
+  const from = cfg.resendFrom || "골지어스 <onboarding@resend.dev>";
+  const o = order.options;
+  const html = `
+    <h2>신규 발주 요청</h2>
+    <ul>
+      <li><b>이름</b>: ${order.name}</li>
+      <li><b>연락처</b>: ${order.phone}</li>
+      <li><b>이메일</b>: ${order.email || "-"}</li>
+      <li><b>품목</b>: ${order.productType}</li>
+      <li><b>옵션</b>: 색 ${o.color || "-"} / 사이즈 ${o.size || "-"} / 수량 ${o.quantity || "-"}</li>
+      <li><b>요청</b>: ${order.message || "-"}</li>
+      <li><b>시안</b>: ${order.designFile ? "첨부됨(관리자에서 확인)" : "없음"}</li>
+    </ul>`;
+  await resendSend(apiKey, from, notifyTo, `[골지어스] 신규 발주 요청 — ${order.name}`, html);
+}
+
+async function orderSms(order: Order, cfg: NotifyConfig): Promise<void> {
+  const { solapiApiKey, solapiApiSecret } = cfg;
+  const sender = digits(cfg.solapiSender);
+  const notifyPhone = digits(cfg.notifyPhone);
+  if (!solapiApiKey || !solapiApiSecret || !sender || !notifyPhone) return;
+  await solapiSend(solapiApiKey, solapiApiSecret, {
+    to: notifyPhone,
+    from: sender,
+    text: `[골지어스] 신규 발주 요청\n${order.name} / ${order.phone} / ${order.productType}`,
+  });
+}
+
+export async function notifyNewOrder(order: Order): Promise<void> {
+  const cfg = await getNotifyConfig();
+  await Promise.allSettled([orderEmail(order, cfg), orderSms(order, cfg)]);
 }

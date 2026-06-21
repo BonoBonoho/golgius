@@ -62,8 +62,34 @@ create table if not exists public.app_settings (
   updated_at  timestamptz not null default now()
 );
 
+-- ── orders (발주 요청) ──────────────────────────────────
+create table if not exists public.orders (
+  id            uuid primary key default gen_random_uuid(),
+  lead_id       uuid references public.leads(id) on delete set null,
+  vertical      text check (vertical in ('gym', 'hospital')),
+  name          text not null,
+  phone         text not null,
+  email         text,
+  product_type  text not null,
+  options       jsonb not null default '{}'::jsonb,  -- {color,size,quantity}
+  design_file   text,                                 -- storage 객체 경로(bucket: order-files)
+  message       text not null default '',
+  status        text not null default 'requested'
+                check (status in ('requested','quoted','confirmed','produced','canceled')),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+create index if not exists orders_created_at_idx on public.orders (created_at desc);
+create index if not exists orders_status_idx on public.orders (status);
+
+-- 시안 파일 비공개 버킷 (서버는 service_role로 업로드/서명 URL 생성)
+insert into storage.buckets (id, name, public)
+values ('order-files', 'order-files', false)
+on conflict (id) do nothing;
+
 -- ── RLS ─────────────────────────────────────────────────
 -- 정책 없음 = anon 키 접근 불가. 서버는 service_role 키로 RLS 우회(안전).
 alter table public.leads enable row level security;
 alter table public.lead_events enable row level security;
 alter table public.app_settings enable row level security;
+alter table public.orders enable row level security;

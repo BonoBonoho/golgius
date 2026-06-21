@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { site } from "@/lib/site";
 
 export default function Footer() {
@@ -11,6 +12,12 @@ export default function Footer() {
             <div className="text-lg font-extrabold tracking-tight">{site.name}</div>
             <p className="mt-1 text-sm text-dim">{site.tagline}</p>
             <p className="mt-4 max-w-sm text-sm text-dim">{site.description}</p>
+            <Link
+              href="/order"
+              className="mt-4 inline-block text-sm font-semibold text-gold transition hover:opacity-80"
+            >
+              단체복·수건 발주 요청 →
+            </Link>
           </div>
 
           <div className="text-sm">
