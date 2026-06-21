@@ -1,0 +1,53 @@
+/* Korean: Pretendard / Latin labels: IBM Plex Mono — @import는 최상단에 위치해야 함 */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendard-dynamic-subset.css");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+@import "tailwindcss";
+
+/* ── 브랜드 디자인 토큰 (정적) ──────────────────────────── */
+@theme {
+  --color-base: #0b0b0d;      /* 딥 차콜 (배경) */
+  --color-surface: #15151a;   /* 패널/카드 */
+  --color-ink: #f4f2ed;       /* 따뜻한 오프화이트 (본문) */
+  --color-dim: #9a968e;       /* 뮤트 텍스트 */
+  --color-line: #ffffff14;    /* 헤어라인 (약 8%) */
+  --color-gold: #c8881f;      /* 골지어스 골드 (마스터 액센트) */
+
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+/* ── 버티컬별 액센트 (동적: VerticalShell이 런타임에 주입) ── */
+:root {
+  --accent: var(--color-gold); /* 기본값 = 브랜드 골드 */
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 영문 라벨/데이터용 유틸 (명함의 AI·CONSULT·GEAR 라벨 무드) */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
