@@ -1,5 +1,6 @@
 import { verticals, type VerticalKey } from "@/lib/verticals";
 import CountUp from "@/components/CountUp";
+import PartnerMarquee from "@/components/sections/PartnerMarquee";
 
 // 실적 — #cases
 export default function Cases({ vertical }: { vertical: VerticalKey }) {
@@ -27,6 +28,9 @@ export default function Cases({ vertical }: { vertical: VerticalKey }) {
             </div>
           ))}
         </div>
+
+        {/* 함께 오픈한 센터 로고 마퀴 */}
+        <PartnerMarquee vertical={vertical} />
 
         {/* 사례 */}
         <div className="mt-10 grid gap-6 md:grid-cols-3">

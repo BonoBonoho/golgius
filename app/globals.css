@@ -47,7 +47,25 @@ body {
   color: var(--accent);
 }
 
+/* ── 로고 마퀴(좌우 무한 흐름) ── */
+@keyframes golgius-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: golgius-marquee var(--marquee-duration, 38s) linear infinite;
+}
+.marquee-wrap:hover .marquee-track { animation-play-state: paused; }
+/* 좌우 끝을 페이드 처리해 자연스럽게 */
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .marquee-track { animation: none; transform: none; }
 }
