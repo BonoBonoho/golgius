@@ -2,6 +2,7 @@
 
 import { addLead } from "@/lib/leads";
 import { notifyNewLead } from "@/lib/notify";
+import { sendCustomerWebhook } from "@/lib/webhook";
 import type { VerticalKey } from "@/lib/verticals";
 
 export interface ContactState {
@@ -60,8 +61,8 @@ export async function submitContact(
 
   try {
     const lead = await addLead({ name, phone, email, region, message: fullMessage, vertical, source });
-    // 알림은 접수 성공과 분리 — 실패해도 사용자에겐 성공 응답(내부 allSettled)
-    await notifyNewLead(lead);
+    // 알림·웹훅은 접수 성공과 분리 — 실패해도 사용자에겐 성공 응답
+    await Promise.allSettled([notifyNewLead(lead), sendCustomerWebhook(lead, "lead.created")]);
   } catch {
     return {
       ok: false,
