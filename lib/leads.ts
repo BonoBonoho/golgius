@@ -188,6 +188,20 @@ export async function updateLeadStage(
   }
 }
 
+export async function getLead(id: string): Promise<Lead | null> {
+  const env = supabaseEnv();
+  if (env) {
+    const res = await fetch(`${env.url}/rest/v1/${TABLE}?id=eq.${id}&select=*&limit=1`, {
+      headers: headers(env.key),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const rows = (await res.json()) as Record<string, unknown>[];
+    return rows[0] ? toLead(rows[0]) : null;
+  }
+  return mem.find((l) => l.id === id) ?? null;
+}
+
 export async function deleteLead(id: string): Promise<void> {
   const env = supabaseEnv();
   if (env) {

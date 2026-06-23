@@ -9,7 +9,7 @@ const inputCls =
 const fileCls =
   "mt-1.5 w-full rounded-lg border border-line bg-base px-4 py-2.5 text-sm text-dim file:mr-3 file:rounded-md file:border-0 file:bg-gold file:px-3 file:py-1.5 file:text-base file:font-semibold";
 
-export default function IntakeForm() {
+export default function IntakeForm({ leadId = "" }: { leadId?: string }) {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<Status>(null);
 
@@ -44,6 +44,7 @@ export default function IntakeForm() {
 
   return (
     <form onSubmit={onSubmit} className="rounded-2xl border border-line bg-surface p-7">
+      <input type="hidden" name="lead_id" value={leadId} />
       <input type="text" name="company" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
 
       {/* 필수 서류 */}

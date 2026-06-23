@@ -24,6 +24,7 @@ export async function POST(req: Request) {
     return json({ ok: true, message: "제출되었습니다." });
   }
 
+  const leadId = String(form.get("lead_id") ?? "").trim();
   const name = String(form.get("name") ?? "").trim();
   const phone = String(form.get("phone") ?? "").trim();
   const ext = String(form.get("ext") ?? "").trim().slice(0, 30);
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
 
   try {
     const intake = await addIntake({
+      leadId: /^[0-9a-f-]{10,}$/i.test(leadId) ? leadId : undefined,
       name,
       phone,
       ext,

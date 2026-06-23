@@ -8,7 +8,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function IntakePage() {
+export default async function IntakePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ lead?: string }>;
+}) {
+  const { lead } = await searchParams;
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-line">
@@ -30,7 +35,7 @@ export default function IntakePage() {
         </p>
 
         <div className="mt-10">
-          <IntakeForm />
+          <IntakeForm leadId={lead ?? ""} />
         </div>
       </main>
     </div>

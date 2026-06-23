@@ -7,6 +7,7 @@ import { moveStage } from "@/app/actions/leads";
 import { verticals } from "@/lib/verticals";
 import AdminLogin from "./AdminLogin";
 import DeleteLeadButton from "@/components/admin/DeleteLeadButton";
+import RequestIntakeButton from "@/components/admin/RequestIntakeButton";
 
 export const dynamic = "force-dynamic";
 
@@ -303,7 +304,8 @@ export default async function AdminPage({
                               <p className="mt-2 whitespace-pre-line text-xs text-dim">{lead.message}</p>
                             )}
                             <MoveButtons lead={lead} />
-                            <div className="mt-2 flex justify-end">
+                            <div className="mt-2 flex items-start justify-between gap-2">
+                              <RequestIntakeButton leadId={lead.id} />
                               <DeleteLeadButton id={lead.id} />
                             </div>
                           </div>
@@ -348,7 +350,12 @@ export default async function AdminPage({
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-dim">{lead.region || "—"}</td>
                     <td className="px-4 py-3 text-dim"><span className="whitespace-pre-line">{lead.message || "—"}</span></td>
-                    <td className="px-4 py-3"><DeleteLeadButton id={lead.id} /></td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col items-start gap-2">
+                        <RequestIntakeButton leadId={lead.id} />
+                        <DeleteLeadButton id={lead.id} />
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

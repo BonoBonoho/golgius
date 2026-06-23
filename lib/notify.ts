@@ -217,3 +217,44 @@ export async function notifyNewIntake(intake: Intake): Promise<void> {
   const cfg = await getNotifyConfig();
   await Promise.allSettled([intakeEmail(intake, cfg), intakeSms(intake, cfg)]);
 }
+
+// ── 고객에게 서류 요청 링크 발송 (담당자 버튼 → 고객 문자/이메일) ──
+export async function sendIntakeLink(lead: Lead, link: string): Promise<boolean> {
+  const cfg = await getNotifyConfig();
+  let sent = false;
+
+  // 문자 (Solapi) → 고객 휴대폰
+  const sender = digits(cfg.solapiSender);
+  if (cfg.solapiApiKey && cfg.solapiApiSecret && sender && lead.phone) {
+    try {
+      await solapiSend(cfg.solapiApiKey, cfg.solapiApiSecret, {
+        to: digits(lead.phone),
+        from: sender,
+        text: `[골지어스] ${lead.name}님, 견적·설치를 위한 서류·정보 제출 페이지입니다.\n${link}`,
+      });
+      sent = true;
+    } catch {
+      // ignore
+    }
+  }
+
+  // 이메일 (Resend) → 고객 이메일
+  if (cfg.resendApiKey && lead.email) {
+    const from = cfg.resendFrom || "골지어스 <onboarding@resend.dev>";
+    try {
+      await resendSend(
+        cfg.resendApiKey,
+        from,
+        lead.email,
+        "[골지어스] 서류·정보 제출 안내",
+        `<p>${lead.name}님, 견적·설치를 위해 아래 페이지에서 서류와 정보를 제출해 주세요.</p>
+         <p><a href="${link}">${link}</a></p>`
+      );
+      sent = true;
+    } catch {
+      // ignore
+    }
+  }
+
+  return sent;
+}

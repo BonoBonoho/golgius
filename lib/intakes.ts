@@ -5,6 +5,7 @@ export type IntakeStatus = "received" | "reviewed" | "done";
 
 export interface Intake {
   id: string;
+  leadId: string;
   name: string;
   phone: string;
   ext: string;
@@ -20,6 +21,7 @@ export interface Intake {
 }
 
 export type NewIntake = {
+  leadId?: string;
   name: string;
   phone: string;
   ext?: string;
@@ -60,6 +62,7 @@ function toIntake(r: Record<string, unknown>): Intake {
     .filter(Boolean);
   return {
     id: String(r.id),
+    leadId: String(r.lead_id ?? ""),
     name: String(r.name ?? ""),
     phone: String(r.phone ?? ""),
     ext: String(r.ext ?? ""),
@@ -126,6 +129,7 @@ export async function addIntake(input: NewIntake): Promise<Intake> {
       method: "POST",
       headers: headers(env.key, { Prefer: "return=representation" }),
       body: JSON.stringify({
+        lead_id: input.leadId || null,
         name: input.name,
         phone: input.phone,
         ext: input.ext ?? null,
@@ -146,6 +150,7 @@ export async function addIntake(input: NewIntake): Promise<Intake> {
 
   const intake: Intake = {
     id: crypto.randomUUID(),
+    leadId: input.leadId ?? "",
     name: input.name,
     phone: input.phone,
     ext: input.ext ?? "",

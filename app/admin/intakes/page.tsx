@@ -101,6 +101,11 @@ export default async function IntakesPage() {
                 <div className="flex items-center gap-2">
                   <span className="font-bold">{intake.name}</span>
                   <span className="font-mono text-xs text-dim">{STATUS_LABEL[intake.status]}</span>
+                  {intake.leadId && (
+                    <span className="rounded-full border border-line px-2 py-0.5 text-[11px] text-dim">
+                      리드 연결됨
+                    </span>
+                  )}
                 </div>
                 <span className="font-mono text-xs text-dim">{fmt.format(new Date(intake.createdAt))}</span>
               </div>
