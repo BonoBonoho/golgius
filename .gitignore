@@ -5,3 +5,7 @@
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# Supabase CLI 임시 파일
+/supabase/.temp
+/supabase/.branches
