@@ -170,6 +170,12 @@ export default async function AdminPage({
             발주 요청
           </Link>
           <Link
+            href="/admin/intakes"
+            className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
+          >
+            서류 접수
+          </Link>
+          <Link
             href="/admin/settings"
             className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
           >

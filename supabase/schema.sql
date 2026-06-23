@@ -87,9 +87,35 @@ insert into storage.buckets (id, name, public)
 values ('order-files', 'order-files', false)
 on conflict (id) do nothing;
 
+-- ── intakes (견적용 서류·정보 수집) ─────────────────────
+create table if not exists public.intakes (
+  id              uuid primary key default gen_random_uuid(),
+  lead_id         uuid references public.leads(id) on delete set null,
+  name            text not null,          -- 담당자 성함
+  phone           text not null,          -- 담당자 휴대폰
+  ext             text,                   -- 사내 내선번호
+  address         text not null,          -- 설치 주소
+  withdrawal_day  text not null,          -- 출금일 (10/15/20/25)
+  email           text not null,
+  install_date    text,                   -- 설치요청일(자유 텍스트)
+  biz_file        text,                   -- 사업자등록증 경로(bucket: intake-files)
+  bank_files      text,                   -- 통장사본/카드 경로(콤마 구분)
+  note            text not null default '',
+  status          text not null default 'received'
+                  check (status in ('received','reviewed','done')),
+  created_at      timestamptz not null default now()
+);
+create index if not exists intakes_created_at_idx on public.intakes (created_at desc);
+
+-- 서류 비공개 버킷 (사업자등록증·통장/카드 등 민감 문서)
+insert into storage.buckets (id, name, public)
+values ('intake-files', 'intake-files', false)
+on conflict (id) do nothing;
+
 -- ── RLS ─────────────────────────────────────────────────
 -- 정책 없음 = anon 키 접근 불가. 서버는 service_role 키로 RLS 우회(안전).
 alter table public.leads enable row level security;
 alter table public.lead_events enable row level security;
 alter table public.app_settings enable row level security;
 alter table public.orders enable row level security;
+alter table public.intakes enable row level security;

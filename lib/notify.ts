@@ -10,6 +10,7 @@
 import { createHmac, randomBytes } from "crypto";
 import type { Lead } from "@/lib/leads";
 import type { Order } from "@/lib/orders";
+import type { Intake } from "@/lib/intakes";
 import { verticals } from "@/lib/verticals";
 import { getNotifyConfig, type NotifyConfig } from "@/lib/settings";
 
@@ -178,4 +179,41 @@ async function orderSms(order: Order, cfg: NotifyConfig): Promise<void> {
 export async function notifyNewOrder(order: Order): Promise<void> {
   const cfg = await getNotifyConfig();
   await Promise.allSettled([orderEmail(order, cfg), orderSms(order, cfg)]);
+}
+
+// ── 신규 서류·정보 제출 알림 ────────────────────────────
+async function intakeEmail(intake: Intake, cfg: NotifyConfig): Promise<void> {
+  const apiKey = cfg.resendApiKey;
+  const notifyTo = cfg.notifyEmail;
+  if (!apiKey || !notifyTo) return;
+  const from = cfg.resendFrom || "골지어스 <onboarding@resend.dev>";
+  const html = `
+    <h2>신규 서류·정보 제출</h2>
+    <ul>
+      <li><b>담당자</b>: ${intake.name} (${intake.phone})</li>
+      <li><b>이메일</b>: ${intake.email}</li>
+      <li><b>설치 주소</b>: ${intake.address}</li>
+      <li><b>출금일</b>: ${intake.withdrawalDay}일</li>
+      <li><b>설치요청일</b>: ${intake.installDate || "-"}</li>
+      <li><b>서류</b>: 사업자등록증 ${intake.bizFile ? "O" : "X"} / 통장·카드 ${intake.bankFiles.length}건</li>
+    </ul>
+    <p>관리자에서 서류를 확인하세요.</p>`;
+  await resendSend(apiKey, from, notifyTo, `[골지어스] 서류·정보 제출 — ${intake.name}`, html);
+}
+
+async function intakeSms(intake: Intake, cfg: NotifyConfig): Promise<void> {
+  const { solapiApiKey, solapiApiSecret } = cfg;
+  const sender = digits(cfg.solapiSender);
+  const notifyPhone = digits(cfg.notifyPhone);
+  if (!solapiApiKey || !solapiApiSecret || !sender || !notifyPhone) return;
+  await solapiSend(solapiApiKey, solapiApiSecret, {
+    to: notifyPhone,
+    from: sender,
+    text: `[골지어스] 서류·정보 제출\n${intake.name} / ${intake.phone}`,
+  });
+}
+
+export async function notifyNewIntake(intake: Intake): Promise<void> {
+  const cfg = await getNotifyConfig();
+  await Promise.allSettled([intakeEmail(intake, cfg), intakeSms(intake, cfg)]);
 }
