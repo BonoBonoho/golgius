@@ -304,9 +304,11 @@ export default async function AdminPage({
                               <p className="mt-2 whitespace-pre-line text-xs text-dim">{lead.message}</p>
                             )}
                             <MoveButtons lead={lead} />
-                            <div className="mt-2 flex items-start justify-between gap-2">
+                            <div className="mt-3 border-t border-line pt-3">
                               <RequestIntakeButton leadId={lead.id} />
-                              <DeleteLeadButton id={lead.id} />
+                              <div className="mt-2 flex justify-end">
+                                <DeleteLeadButton id={lead.id} />
+                              </div>
                             </div>
                           </div>
                         ))
