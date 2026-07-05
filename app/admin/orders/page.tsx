@@ -63,7 +63,7 @@ export default async function OrdersPage({
 }: {
   searchParams: Promise<{ view?: string }>;
 }) {
-  if (!(await isAuthed())) redirect("/admin");
+  if (!(await isAuthed())) redirect("/admin/login");
 
   const sp = await searchParams;
   const view: "cards" | "table" = sp.view === "table" ? "table" : "cards";

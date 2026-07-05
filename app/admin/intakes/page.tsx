@@ -57,7 +57,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export default async function IntakesPage() {
-  if (!(await isAuthed())) redirect("/admin");
+  if (!(await isAuthed())) redirect("/admin/login");
 
   const intakes = await getIntakes();
   const withUrls = await Promise.all(

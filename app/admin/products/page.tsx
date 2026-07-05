@@ -19,7 +19,7 @@ export default async function AdminProductsPage({
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
-  if (!(await isAuthed())) redirect("/admin");
+  if (!(await isAuthed())) redirect("/admin/login");
 
   const sp = await searchParams;
   const editing = sp.edit ? await getProduct(sp.edit) : null;

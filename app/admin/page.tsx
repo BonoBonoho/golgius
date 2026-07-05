@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { isAuthed, adminPassword } from "@/lib/admin";
+import { redirect } from "next/navigation";
+import { isAuthed, getAdminUser } from "@/lib/admin";
 import { getLeads, isPersistent, PIPELINE, type Lead, type Stage } from "@/lib/leads";
 import { computeInsights, daysSince, STALL_DAYS } from "@/lib/insights";
 import { logout } from "@/app/actions/admin";
 import { moveStage } from "@/app/actions/leads";
 import { verticals } from "@/lib/verticals";
-import AdminLogin from "./AdminLogin";
 import DeleteLeadButton from "@/components/admin/DeleteLeadButton";
 import RequestIntakeButton from "@/components/admin/RequestIntakeButton";
 
@@ -84,10 +84,9 @@ export default async function AdminPage({
 }: {
   searchParams: Promise<{ days?: string; view?: string }>;
 }) {
-  if (!(await isAuthed())) {
-    return <AdminLogin configured={adminPassword() !== null} />;
-  }
+  if (!(await isAuthed())) redirect("/admin/login");
 
+  const admin = await getAdminUser();
   const sp = await searchParams;
   const days = sp.days === "7" || sp.days === "30" ? Number(sp.days) : null;
   const view: "board" | "table" = sp.view === "table" ? "table" : "board";
@@ -129,6 +128,9 @@ export default async function AdminPage({
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">리드 관리</h1>
           <p className="mt-1 text-sm text-dim">
+            {admin?.name ? `${admin.name} · ` : ""}
+            {admin?.email ?? ""}
+            {(admin?.name || admin?.email) && " · "}
             {days ? `최근 ${days}일` : "전체"} · {ins.total}건
             {!isPersistent() && (
               <span style={{ color: "#e2574a" }}>
