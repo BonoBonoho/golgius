@@ -1,5 +1,5 @@
 {
   "redirects": [
-    { "source": "/:path*", "destination": "https://golgius.milestone-x.app/:path*", "permanent": true }
+    { "source": "/:path*", "destination": "https://golgius.biz/:path*", "permanent": true }
   ]
 }
