@@ -1,5 +1,0 @@
-{
-  "redirects": [
-    { "source": "/:path*", "destination": "https://golgius.biz/:path*", "permanent": true }
-  ]
-}

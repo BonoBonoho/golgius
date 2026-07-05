@@ -29,6 +29,9 @@ export default function Header({ vertical }: { vertical: VerticalKey }) {
           {v.offerings.length > 0 && (
             <a href="#offerings" className="transition hover:text-ink">취급 품목</a>
           )}
+          {vertical === "gym" && (
+            <Link href="/gym/shop" className="transition hover:text-ink">기구 스토어</Link>
+          )}
           <a href="#process" className="transition hover:text-ink">진행 과정</a>
           <Link href={`/${other.key}`} className="transition hover:text-ink">
             {other.label} 보기

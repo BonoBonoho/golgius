@@ -15,6 +15,8 @@ export const SETTING_ENV: Record<string, string> = {
   solapi_api_secret: "SOLAPI_API_SECRET",
   solapi_sender: "SOLAPI_SENDER",
   notify_phone: "GOLGIUS_NOTIFY_PHONE",
+  shop_title: "SHOP_TITLE",
+  shop_sub: "SHOP_SUB",
 };
 
 export type SettingKey = keyof typeof SETTING_ENV;
@@ -125,6 +127,25 @@ export async function saveDbSettings(
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`settings upsert ${res.status}`);
+}
+
+// ── 기구 스토어 문구 (어드민에서 수정, 재배포 불필요) ──
+export const SHOP_COPY_DEFAULTS = {
+  title: "헬스 기구 담아서 한번에 견적 받으세요",
+  sub: "1,200곳을 열어본 골지어스가 검증한 기구 라인업입니다. 필요한 기구를 바구니에 담아 견적을 요청하면 설치·배치까지 함께 안내해 드립니다.",
+};
+
+export interface ShopCopy {
+  title: string;
+  sub: string;
+}
+
+export async function getShopCopy(): Promise<ShopCopy> {
+  const db = await getDbSettings();
+  return {
+    title: effective("shop_title", db).value || SHOP_COPY_DEFAULTS.title,
+    sub: effective("shop_sub", db).value || SHOP_COPY_DEFAULTS.sub,
+  };
 }
 
 export function maskSecret(v: string): string {

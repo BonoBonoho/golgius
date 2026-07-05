@@ -77,4 +77,5 @@ EOF
 aws route53 change-resource-record-sets --hosted-zone-id "$ZONE" --change-batch file:///tmp/golg-alias-records.json >/dev/null
 
 echo "완료 — CloudFront 전파 후 https://${DOMAIN}"
+echo "⚠️ milestone-x.app 서브도메인 병존 시: bash scripts/aws/cert-unify.sh <CF배포ID> 로 3개 SAN 통합 인증서 사용."
 echo "⚠️ 이후: (1) 새 도메인 포함해 ALLOWED_ORIGINS 재빌드/재배포, (2) 외부연동 API 소비자·웹훅 URL 갱신."

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # golgius 배포(최초 + 재배포 겸용): Next standalone 로컬 빌드 → EC2 rsync(자기완결 번들)
 #   + /_next/static → S3. 비공개 저장소라 git clone 대신 로컬 rsync.
-# 환경파일 .env.production.local (= `npx vercel env pull .env.production.local` 산출물, 빈 값 채운 것):
+# 환경파일 .env.production.local (프로덕션 시크릿, gitignore):
 #   · 빌드시  : Next 가 자동 로드 → NEXT_PUBLIC_* 인라인.
 #   · 런타임  : EC2 ~/app/.env 로 업로드되어 `node --env-file=.env` 로 로드(민감값 포함).
 # t4g.small(2GB) 에서 Next 빌드는 무겁다 → 빌드는 로컬, EC2 엔 standalone 산출물만 전송(npm ci 불필요).
@@ -16,7 +16,7 @@ KEY=~/.ssh/golgius.pem
 SSHOPTS=(-i "$KEY" -o StrictHostKeyChecking=accept-new)
 SSH="ssh ${SSHOPTS[*]} ubuntu@$IP"
 
-[ -f .env.production.local ] || { echo "⚠️ .env.production.local 없음 — 'npx vercel env pull .env.production.local --environment=production' 후 빈 값 채우고 재실행"; exit 1; }
+[ -f .env.production.local ] || { echo "⚠️ .env.production.local 없음 — 프로덕션 env 파일 준비 후 재실행"; exit 1; }
 
 echo "== [1/6] 프로덕션 빌드(standalone) =="
 export ALLOWED_ORIGINS                 # next.config.mjs 가 process.env 로 읽어 Server Actions 허용목록에 반영
