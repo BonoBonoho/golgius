@@ -7,6 +7,7 @@
 set -euo pipefail
 REGION="${AWS_REGION:-ap-northeast-2}"
 TABLE=golgius-products
+ADMIN_TABLE=golgius-admin-users
 BUCKET=golgius-web-624627264933
 DIST_ID=E1PXGQWLU7OP7S
 INSTANCE=i-0e8f0108342602704   # 골지어스 EC2 — 이 인스턴스 외 조작 금지
@@ -14,7 +15,7 @@ ROLE=golgius-app-role
 PROFILE=golgius-app-profile
 ACC=$(aws sts get-caller-identity --query Account --output text)
 
-echo "== [1/4] DynamoDB 테이블 ($TABLE, 온디맨드) =="
+echo "== [1/5] DynamoDB 테이블 ($TABLE, 온디맨드) =="
 if aws dynamodb describe-table --table-name "$TABLE" --region "$REGION" >/dev/null 2>&1; then
   echo "  기존 테이블 재사용"
 else
@@ -27,7 +28,20 @@ else
   echo "  생성 완료"
 fi
 
-echo "== [2/4] IAM 역할·정책·인스턴스 프로파일 =="
+echo "== [2/5] DynamoDB 어드민 계정 테이블 ($ADMIN_TABLE) =="
+if aws dynamodb describe-table --table-name "$ADMIN_TABLE" --region "$REGION" >/dev/null 2>&1; then
+  echo "  기존 테이블 재사용"
+else
+  aws dynamodb create-table --table-name "$ADMIN_TABLE" --region "$REGION" \
+    --attribute-definitions AttributeName=email,AttributeType=S \
+    --key-schema AttributeName=email,KeyType=HASH \
+    --billing-mode PAY_PER_REQUEST \
+    --tags Key=Project,Value=golgius Key=Name,Value=golgius-admin-users >/dev/null
+  aws dynamodb wait table-exists --table-name "$ADMIN_TABLE" --region "$REGION"
+  echo "  생성 완료"
+fi
+
+echo "== [3/5] IAM 역할·정책·인스턴스 프로파일 =="
 if ! aws iam get-role --role-name "$ROLE" >/dev/null 2>&1; then
   aws iam create-role --role-name "$ROLE" --tags Key=Project,Value=golgius \
     --assume-role-policy-document '{
@@ -50,12 +64,17 @@ aws iam put-role-policy --role-name "$ROLE" --policy-name golgius-shop \
       },
       {
         \"Effect\": \"Allow\",
+        \"Action\": [\"dynamodb:GetItem\",\"dynamodb:PutItem\"],
+        \"Resource\": \"arn:aws:dynamodb:${REGION}:${ACC}:table/${ADMIN_TABLE}\"
+      },
+      {
+        \"Effect\": \"Allow\",
         \"Action\": [\"s3:PutObject\",\"s3:GetObject\",\"s3:DeleteObject\"],
         \"Resource\": \"arn:aws:s3:::${BUCKET}/media/*\"
       }
     ]
   }"
-echo "  정책 갱신: golgius-shop (DynamoDB ${TABLE} + S3 media/*)"
+echo "  정책 갱신: golgius-shop (DynamoDB ${TABLE}, ${ADMIN_TABLE} + S3 media/*)"
 
 if ! aws iam get-instance-profile --instance-profile-name "$PROFILE" >/dev/null 2>&1; then
   aws iam create-instance-profile --instance-profile-name "$PROFILE" >/dev/null
@@ -68,7 +87,7 @@ if ! aws iam get-instance-profile --instance-profile-name "$PROFILE" \
 fi
 echo "  인스턴스 프로파일: $PROFILE"
 
-echo "== [3/4] EC2 인스턴스 프로파일 연결 ($INSTANCE) =="
+echo "== [4/5] EC2 인스턴스 프로파일 연결 ($INSTANCE) =="
 ASSOC=$(aws ec2 describe-iam-instance-profile-associations --region "$REGION" \
   --filters "Name=instance-id,Values=$INSTANCE" "Name=state,Values=associated" \
   --query 'IamInstanceProfileAssociations[0].IamInstanceProfile.Arn' --output text 2>/dev/null || echo None)
@@ -83,7 +102,7 @@ else
   echo "  연결 완료 (재부팅 불필요)"
 fi
 
-echo "== [4/4] CloudFront /media/* → s3-static 비헤이비어 =="
+echo "== [5/5] CloudFront /media/* → s3-static 비헤이비어 =="
 aws cloudfront get-distribution-config --id "$DIST_ID" > /tmp/golg-shop-cf.json
 python3 - <<'EOF'
 import json

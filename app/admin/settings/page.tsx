@@ -13,7 +13,7 @@ import SettingsForm, { type Group } from "./SettingsForm";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  if (!(await isAuthed())) redirect("/admin");
+  if (!(await isAuthed())) redirect("/admin/login");
 
   if (!settingsBacked()) {
     return (
