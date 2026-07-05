@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { verticals, type VerticalKey } from "@/lib/verticals";
 
 // 취급 품목 A-Z — "헬스장의 모든 것을 한 곳에서"
@@ -51,6 +52,15 @@ export default function Offerings({ vertical }: { vertical: VerticalKey }) {
                   </li>
                 ))}
               </ul>
+              {g.href && (
+                <Link
+                  href={g.href}
+                  className="mt-4 inline-block text-sm font-semibold transition hover:opacity-80"
+                  style={{ color: "var(--accent)" }}
+                >
+                  스토어 바로가기 →
+                </Link>
+              )}
             </div>
           ))}
         </div>

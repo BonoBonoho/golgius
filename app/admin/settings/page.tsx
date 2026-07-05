@@ -5,6 +5,7 @@ import {
   effective,
   settingsBacked,
   maskSecret,
+  SHOP_COPY_DEFAULTS,
   type SettingKey,
 } from "@/lib/settings";
 import SettingsForm, { type Group } from "./SettingsForm";
@@ -75,13 +76,22 @@ export default async function SettingsPage() {
         field("notify_phone", "담당자 수신 번호", false, "01063815008"),
       ],
     },
+    {
+      title: "기구 스토어 문구 (/gym/shop)",
+      active: true,
+      status: "즉시 적용",
+      fields: [
+        field("shop_title", "제목 (비우면 기본 문구)", false, SHOP_COPY_DEFAULTS.title),
+        field("shop_sub", "소개 문구 (비우면 기본 문구)", false, SHOP_COPY_DEFAULTS.sub),
+      ],
+    },
   ];
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-12">
-      <h1 className="text-2xl font-extrabold tracking-tight">알림 설정</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight">설정</h1>
       <p className="mt-2 text-sm text-dim">
-        문의 접수 시 보낼 이메일·문자 키와 수신처를 여기서 관리합니다. DB에 저장되며 환경변수보다 우선합니다.
+        알림 키·수신처와 기구 스토어 문구를 여기서 관리합니다. DB에 저장되며 재배포 없이 즉시 적용됩니다.
       </p>
       <SettingsForm groups={groups} />
     </main>

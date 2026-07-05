@@ -177,6 +177,12 @@ export default async function AdminPage({
             서류 접수
           </Link>
           <Link
+            href="/admin/products"
+            className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
+          >
+            기구 상품
+          </Link>
+          <Link
             href="/admin/settings"
             className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-dim transition hover:text-ink"
           >
