@@ -6,7 +6,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -33,8 +33,10 @@ const s3 = new S3Client({ region: REGION });
 async function uploadImage(productId) {
   const local = join(IMAGE_DIR, `${productId}.jpg`);
   if (!existsSync(local)) return [];
-  const key = `${MEDIA_PREFIX}mc/${productId}.jpg`;
   const body = readFileSync(local);
+  // 콘텐츠 해시를 키에 포함 → 이미지가 바뀌면 URL도 바뀌어 immutable 캐시 문제 없음
+  const hash = createHash("sha1").update(body).digest("hex").slice(0, 8);
+  const key = `${MEDIA_PREFIX}mc/${productId}-${hash}.jpg`;
   await s3.send(
     new PutObjectCommand({
       Bucket: BUCKET,
