@@ -42,10 +42,13 @@ export type NewProduct = Omit<Product, "id" | "createdAt" | "updatedAt"> & {
 };
 
 export const PRODUCT_CATEGORIES = [
-  "웨이트 머신",
+  "Plate Loaded",
+  "Select Pro2",
+  "MTS",
+  "ISO",
+  "Leverage",
+  "프리웨이트·랙·멀티",
   "유산소",
-  "프리웨이트",
-  "액세서리",
 ] as const;
 
 const REGION = process.env.AWS_REGION ?? "ap-northeast-2";
