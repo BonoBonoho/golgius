@@ -13,7 +13,12 @@ export default function ProductImage({
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={alt} className={`object-cover ${className}`} loading="lazy" />
+      <img
+        src={src}
+        alt={alt}
+        className={`bg-white object-contain p-2 ${className}`}
+        loading="lazy"
+      />
     );
   }
   return (

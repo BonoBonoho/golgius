@@ -2,7 +2,12 @@
 
 import { useActionState } from "react";
 import { upsertProduct, type ProductFormState } from "@/app/actions/products";
-import { PRODUCT_CATEGORIES, type Product } from "@/lib/products";
+import {
+  PRODUCT_CATEGORIES,
+  PRODUCT_BODY_PARTS,
+  PRODUCT_DRIVE_TYPES,
+  type Product,
+} from "@/lib/products";
 
 const inputCls =
   "mt-1.5 w-full rounded-lg border border-line bg-base px-4 py-2.5 text-sm outline-none transition focus:border-gold";
@@ -29,6 +34,28 @@ export default function ProductForm({ product }: { product?: Product }) {
             <option value="" disabled>선택하세요</option>
             {PRODUCT_CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-sm text-dim">운동 부위</span>
+          <select name="bodyPart" defaultValue={product?.bodyPart ?? ""} className={inputCls}>
+            <option value="">선택 안 함</option>
+            {PRODUCT_BODY_PARTS.map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="text-sm text-dim">세부 부위</span>
+          <input name="bodyDetail" defaultValue={product?.bodyDetail} placeholder="가슴, 등, 대퇴/둔근…" className={inputCls} />
+        </label>
+        <label className="block">
+          <span className="text-sm text-dim">구동 방식</span>
+          <select name="driveType" defaultValue={product?.driveType ?? ""} className={inputCls}>
+            <option value="">선택 안 함</option>
+            {PRODUCT_DRIVE_TYPES.map((d) => (
+              <option key={d} value={d}>{d}</option>
             ))}
           </select>
         </label>
