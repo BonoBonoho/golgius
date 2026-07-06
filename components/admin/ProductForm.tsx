@@ -34,7 +34,7 @@ export default function ProductForm({ product }: { product?: Product }) {
         </label>
         <label className="block">
           <span className="text-sm text-dim">브랜드</span>
-          <input name="brand" defaultValue={product?.brand} placeholder="GOLGIUS PRO" className={inputCls} />
+          <input name="brand" defaultValue={product?.brand ?? "MC"} placeholder="MC" className={inputCls} />
         </label>
         <label className="block">
           <span className="text-sm text-dim">가격 (원, 비우면 &quot;견적 문의&quot;)</span>

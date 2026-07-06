@@ -12,8 +12,8 @@ export default function GearCTA() {
               헬스 기구 담아서 한번에 견적 받으세요
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-dim md:text-base">
-              웨이트 머신부터 유산소·프리웨이트까지 — 골지어스가 검증한 기구를
-              바구니에 담으면 설치·배치 컨설팅과 함께 견적을 보내드립니다.
+              Plate Loaded·Select Pro2·ISO·랙·유산소까지 — 바구니에 담으면
+              설치·배치 컨설팅과 함께 견적을 보내드립니다.
             </p>
           </div>
 

@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "기구 스토어 — 골지어스",
   description:
-    "헬스 기구 담아서 한번에 견적 받으세요. 웨이트 머신·유산소·프리웨이트까지 골지어스가 검증한 라인업.",
+    "헬스 기구 담아서 한번에 견적 받으세요. Plate Loaded부터 유산소까지 골지어스가 검증한 라인업.",
 };
 
 export default async function ShopPage({
@@ -106,7 +106,7 @@ export default async function ShopPage({
       )}
 
       <p className="mt-12 rounded-2xl border border-line bg-surface p-6 text-sm leading-relaxed text-dim">
-        찾는 기구가 없나요? 골지어스는 표기된 상품 외에도 전 브랜드 기구를 취급합니다.{" "}
+        찾는 기구가 없나요? 표기된 상품 외 기종도 문의 가능합니다.{" "}
         <Link href="/gym#contact" className="font-semibold" style={{ color: "var(--accent)" }}>
           오픈 상담
         </Link>
