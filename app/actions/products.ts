@@ -13,6 +13,8 @@ import {
   uploadProductImage,
   deleteProductImage,
   PRODUCT_CATEGORIES,
+  PRODUCT_BODY_PARTS,
+  PRODUCT_DRIVE_TYPES,
   type ProductSpec,
 } from "@/lib/products";
 
@@ -47,6 +49,15 @@ export async function upsertProduct(
   const id = String(formData.get("id") ?? "").trim() || undefined;
   const name = String(formData.get("name") ?? "").trim().slice(0, 120);
   const category = String(formData.get("category") ?? "").trim();
+  const bodyPartRaw = String(formData.get("bodyPart") ?? "").trim();
+  const bodyPart = (PRODUCT_BODY_PARTS as readonly string[]).includes(bodyPartRaw)
+    ? bodyPartRaw
+    : "";
+  const bodyDetail = String(formData.get("bodyDetail") ?? "").trim().slice(0, 60);
+  const driveTypeRaw = String(formData.get("driveType") ?? "").trim();
+  const driveType = (PRODUCT_DRIVE_TYPES as readonly string[]).includes(driveTypeRaw)
+    ? driveTypeRaw
+    : "";
   const brand = String(formData.get("brand") ?? "").trim().slice(0, 60);
   const priceRaw = String(formData.get("price") ?? "").replace(/[^0-9]/g, "");
   const price = priceRaw ? Number(priceRaw) : null;
@@ -79,7 +90,7 @@ export async function upsertProduct(
   }
 
   try {
-    await saveProduct({ id, name, category, brand, price, summary, specs, images: images.slice(0, 5), featured, status });
+    await saveProduct({ id, name, category, bodyPart, bodyDetail, driveType, brand, price, summary, specs, images: images.slice(0, 5), featured, status });
   } catch {
     return { ok: false, message: "저장 중 오류가 발생했습니다." };
   }

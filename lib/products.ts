@@ -25,7 +25,10 @@ export interface ProductSpec {
 export interface Product {
   id: string;
   name: string;
-  category: string;
+  category: string; // 시리즈 (Plate Loaded, ISO …)
+  bodyPart: string; // 운동 부위 대분류 (상체·하체·부위별)
+  bodyDetail: string; // 세부 부위 (가슴, 등, 대퇴/둔근 …)
+  driveType: string; // 구동방식 (핀머신, 플레이트로디드 …)
   brand: string;
   price: number | null; // null = 견적 문의
   summary: string;
@@ -48,6 +51,17 @@ export const PRODUCT_CATEGORIES = [
   "ISO",
   "Leverage",
   "프리웨이트·랙·멀티",
+  "유산소",
+] as const;
+
+export const PRODUCT_BODY_PARTS = ["상체", "하체", "부위별"] as const;
+
+export const PRODUCT_DRIVE_TYPES = [
+  "핀머신",
+  "핀머신(멀티)",
+  "플레이트로디드",
+  "프리웨이트/랙",
+  "케이블",
   "유산소",
 ] as const;
 
@@ -89,6 +103,9 @@ function toProduct(r: Record<string, unknown>): Product {
     id: String(r.id ?? ""),
     name: String(r.name ?? ""),
     category: String(r.category ?? ""),
+    bodyPart: String(r.bodyPart ?? ""),
+    bodyDetail: String(r.bodyDetail ?? ""),
+    driveType: String(r.driveType ?? ""),
     brand: String(r.brand ?? ""),
     price,
     summary: String(r.summary ?? ""),
@@ -148,6 +165,9 @@ export async function saveProduct(input: NewProduct & { id?: string }): Promise<
     id: input.id ?? crypto.randomUUID(),
     name: input.name,
     category: input.category,
+    bodyPart: input.bodyPart,
+    bodyDetail: input.bodyDetail,
+    driveType: input.driveType,
     brand: input.brand,
     price: input.price,
     summary: input.summary,

@@ -12,6 +12,13 @@ except ImportError:
     print("Pillow 필요: pip install Pillow", file=sys.stderr)
     sys.exit(1)
 
+try:
+    import cv2
+    import numpy as np
+except ImportError:
+    print("OpenCV 필요: pip install opencv-python-headless numpy", file=sys.stderr)
+    sys.exit(1)
+
 PDF_PATH = Path("/Users/bonohan/Downloads/매머드컴퍼니 MC 카달로그.pdf")
 RENDER_DIR = Path("/tmp/mc-catalog")
 OUT_DIR = Path("/tmp/mc-products")
@@ -104,34 +111,153 @@ def _machine_bbox(cell: Image.Image) -> tuple[int, int, int, int] | None:
 
 
 def _remove_blue_logo(crop: Image.Image) -> Image.Image:
-    """파란색 브랜드 로고(THOMSON 등)를 영역째 흰색으로 삭제.
+    """흰 배경 위에 떠 있는 파란색 워터마크(THOMSON 등)만 삭제.
 
-    기구는 흑백·빨강 계열이므로 파란 픽셀은 로고뿐. 파란 픽셀들의 bbox를
-    여유 있게 잡아 통째로 지워 잔상(테두리·안티앨리어싱)이 남지 않게 한다.
+    파란 클러스터의 주변이 대부분 흰 배경일 때만 로고로 판정한다.
+    기구 자체에 파란 부품이 있는 경우(H60 등)는 주변이 어두워 보존된다.
     """
-    rgb = crop.convert("RGB")
-    px = rgb.load()
-    w, h = rgb.size
+    img = np.array(crop.convert("RGB"))
+    h, w = img.shape[:2]
+    r = img[:, :, 0].astype(np.int16)
+    g = img[:, :, 1].astype(np.int16)
+    b = img[:, :, 2].astype(np.int16)
+    blue = ((b > 90) & (b > r + 35) & (b > g + 25)).astype(np.uint8)
+    if blue.sum() < 15:
+        return crop.convert("RGB")
 
-    xs: list[int] = []
-    ys: list[int] = []
-    for y in range(h):
-        for x in range(w):
-            r, g, b = px[x, y]
-            if b > 90 and b > r + 35 and b > g + 25:
-                xs.append(x)
-                ys.append(y)
+    gray = np.array(crop.convert("L"))
+    # 로고 글자들을 하나의 클러스터로 묶음
+    clustered = cv2.dilate(blue, np.ones((25, 25), np.uint8))
+    n, labels = cv2.connectedComponents(clustered)
+    out = img.copy()
+    for i in range(1, n):
+        cluster = labels == i
+        ys, xs = np.nonzero(cluster & (blue > 0))
+        if len(xs) < 15:
+            continue
+        pad = 8
+        x0, x1 = max(0, xs.min() - pad), min(w, xs.max() + pad)
+        y0, y1 = max(0, ys.min() - pad), min(h, ys.max() + pad)
+        # 주변 링 검사: 흰 배경 위 워터마크인지
+        rx0, rx1 = max(0, x0 - 12), min(w, x1 + 12)
+        ry0, ry1 = max(0, y0 - 12), min(h, y1 + 12)
+        ring = np.ones((ry1 - ry0, rx1 - rx0), bool)
+        ring[(y0 - ry0):(y1 - ry0), (x0 - rx0):(x1 - rx0)] = False
+        ring_px = gray[ry0:ry1, rx0:rx1][ring]
+        if ring_px.size == 0 or (ring_px > 225).mean() < 0.8:
+            continue  # 주변이 어두움 → 기구 부품, 보존
+        out[y0:y1, x0:x1] = 255
+    return Image.fromarray(out)
 
-    if len(xs) < 15:  # 노이즈 수준이면 무시
-        return rgb
 
-    pad = max(6, int(min(w, h) * 0.03))
-    x0, x1 = max(0, min(xs) - pad * 3), min(w, max(xs) + pad * 3)
-    y0, y1 = max(0, min(ys) - pad), min(h, max(ys) + pad)
-    for y in range(y0, y1):
-        for x in range(x0, x1):
-            px[x, y] = (255, 255, 255)
-    return rgb
+def _remove_printed_logo(crop: Image.Image) -> Image.Image:
+    """사진에 인쇄된 타사 로고 제거.
+
+    (a) 어두운 프레임 위 소형 밝은 글자 클러스터(CYBEX·Life Fitness 등) → 인페인트
+    (b) 성근 회색조 로고 블록(Hammer Strength 다리 로고 등) → 인페인트
+    (c) 스택 커버의 순백 세로 스티커 라벨 → 주변 프레임 색으로 치환
+    순백(>=235) 성분은 (a)(b)에서 제외해 기구 틈 사이 배경을 보호한다.
+    """
+    img = cv2.cvtColor(np.array(crop.convert("RGB")), cv2.COLOR_RGB2BGR)
+    h, w = img.shape[:2]
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    area_img = h * w
+
+    # 테두리와 연결된 밝은 영역 = 배경
+    bright_bg = (gray > 235).astype(np.uint8)
+    ff = bright_bg.copy()
+    holes = np.zeros((h + 2, w + 2), np.uint8)
+    for seed in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]:
+        if ff[seed[1], seed[0]]:
+            cv2.floodFill(ff, holes, seed, 2)
+    background = ff == 2
+
+    inside_bright = ((gray > 145) & ~background).astype(np.uint8)
+
+    n, labels, stats, _ = cv2.connectedComponentsWithStats(inside_bright, 8)
+    letter_mask = np.zeros((h, w), np.uint8)
+    block_mask = np.zeros((h, w), np.uint8)
+    out = img.copy()
+    patched = False
+
+    for i in range(1, n):
+        x, y, bw, bh, area = stats[i]
+        if area < 6:
+            continue
+        comp = (labels == i).astype(np.uint8)
+        dil = cv2.dilate(comp, np.ones((9, 9), np.uint8))
+        ring = (dil > 0) & (comp == 0) & ~background
+        if ring.sum() < 12:
+            continue
+        if np.median(gray[ring]) > 115:
+            continue  # 주변이 밝음 → 프레임 위 로고 아님
+        fill = area / max(1, bw * bh)
+        mean = float(gray[comp > 0].mean())
+
+        # (a) 소형 글자 후보
+        if area <= area_img * 0.0025 and bw < w * 0.2 and bh < h * 0.2:
+            if (area <= 120 or fill < 0.8) and mean < 240:
+                letter_mask |= comp
+            continue
+
+        # (b) 성근 회색조 로고 블록
+        if (
+            area <= area_img * 0.015
+            and bw < w * 0.3
+            and bh < h * 0.35
+            and fill < 0.55
+            and mean < 235
+        ):
+            block_mask |= comp
+            continue
+
+        # (c) 순백 세로 스티커 라벨 (스택 커버)
+        if (
+            area_img * 0.001 <= area <= area_img * 0.03
+            and fill >= 0.55
+            and mean >= 235
+            and bh >= bw * 2.2
+            and bw < w * 0.18
+        ):
+            ring_color = np.median(img[ring], axis=0)
+            grown = cv2.dilate(comp, np.ones((7, 7), np.uint8)) > 0
+            grown &= ~background
+            out[grown] = ring_color
+            patched = True
+
+    # 기구 위 파란 스티커·플래카드 (기구 자체는 흑백·빨강·크림 계열)
+    bch = img[:, :, 0].astype(np.int16)
+    gch = img[:, :, 1].astype(np.int16)
+    rch = img[:, :, 2].astype(np.int16)
+    blue_px = ((bch > 80) & (bch > rch + 30) & (bch > gch + 15) & ~background).astype(np.uint8)
+    if blue_px.sum() >= 20:
+        blue_blob = cv2.dilate(blue_px, np.ones((7, 7), np.uint8))
+        bn, blabels, bstats, _ = cv2.connectedComponentsWithStats(blue_blob, 8)
+        for i in range(1, bn):
+            bx, by, bbw, bbh, barea = bstats[i]
+            if barea < 20 or barea > area_img * 0.02:
+                continue
+            block_mask |= ((blabels == i) & (blue_blob > 0)).astype(np.uint8)
+
+    # 글자는 3개 이상 모인 클러스터만 지움 (금속 반사광 등 오검출 방지)
+    if letter_mask.sum() > 0:
+        clustered = cv2.dilate(letter_mask, np.ones((11, 11), np.uint8))
+        cn, clabels = cv2.connectedComponents(clustered)
+        for i in range(1, cn):
+            cluster = (clabels == i) & (letter_mask > 0)
+            sub_n, _ = cv2.connectedComponents(cluster.astype(np.uint8))
+            if sub_n - 1 >= 3:
+                block_mask |= cluster.astype(np.uint8)
+
+    if block_mask.sum() > 0:
+        m = cv2.dilate(block_mask, np.ones((5, 5), np.uint8))
+        m[background] = 0
+        out = cv2.inpaint(out, m, 4, cv2.INPAINT_TELEA)
+        patched = True
+
+    if not patched:
+        return crop
+    return Image.fromarray(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
 
 
 def _strip_bottom_text(crop: Image.Image) -> Image.Image:
@@ -204,7 +330,8 @@ def crop_slot(img: Image.Image, layout: str, slot: int) -> Image.Image:
     bbox = _machine_bbox(cell)
     crop = cell.crop(bbox) if bbox else cell
     crop = _strip_bottom_text(crop)
-    return _remove_blue_logo(crop)
+    crop = _remove_blue_logo(crop)
+    return _remove_printed_logo(crop)
 
 
 def main() -> None:

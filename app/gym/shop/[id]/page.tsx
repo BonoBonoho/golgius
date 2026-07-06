@@ -62,10 +62,20 @@ export default async function ProductPage({
 
         {/* 정보 */}
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-xs tracking-wider" style={{ color: "var(--accent)" }}>
               {p.category}
             </span>
+            {p.bodyPart && (
+              <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] tracking-wider text-dim">
+                {[p.bodyPart, p.bodyDetail].filter(Boolean).join(" · ")}
+              </span>
+            )}
+            {p.driveType && (
+              <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] tracking-wider text-dim">
+                {p.driveType}
+              </span>
+            )}
             {p.featured && (
               <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] tracking-wider text-dim">
                 BEST
