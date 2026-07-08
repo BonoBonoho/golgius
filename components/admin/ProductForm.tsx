@@ -25,8 +25,12 @@ export default function ProductForm({ product }: { product?: Product }) {
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="text-sm text-dim">상품명</span>
-          <input name="name" required minLength={2} defaultValue={product?.name} placeholder="파워 랙 PR-500" className={inputCls} />
+          <span className="text-sm text-dim">상품명 (영어)</span>
+          <input name="name" required minLength={2} defaultValue={product?.name} placeholder="Power Rack PR-500" className={inputCls} />
+        </label>
+        <label className="block">
+          <span className="text-sm text-dim">상품명 (한국어)</span>
+          <input name="nameKo" defaultValue={product?.nameKo} placeholder="파워 랙" className={inputCls} />
         </label>
         <label className="block">
           <span className="text-sm text-dim">카테고리</span>

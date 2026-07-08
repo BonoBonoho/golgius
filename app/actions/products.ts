@@ -48,6 +48,7 @@ export async function upsertProduct(
 
   const id = String(formData.get("id") ?? "").trim() || undefined;
   const name = String(formData.get("name") ?? "").trim().slice(0, 120);
+  const nameKo = String(formData.get("nameKo") ?? "").trim().slice(0, 120);
   const category = String(formData.get("category") ?? "").trim();
   const bodyPartRaw = String(formData.get("bodyPart") ?? "").trim();
   const bodyPart = (PRODUCT_BODY_PARTS as readonly string[]).includes(bodyPartRaw)
@@ -90,7 +91,7 @@ export async function upsertProduct(
   }
 
   try {
-    await saveProduct({ id, name, category, bodyPart, bodyDetail, driveType, brand, price, summary, specs, images: images.slice(0, 5), featured, status });
+    await saveProduct({ id, name, nameKo, category, bodyPart, bodyDetail, driveType, brand, price, summary, specs, images: images.slice(0, 5), featured, status });
   } catch {
     return { ok: false, message: "저장 중 오류가 발생했습니다." };
   }

@@ -360,6 +360,8 @@ def main() -> None:
     manifest: dict[str, str] = {}
 
     for prod in products:
+        if "page" not in prod["image"]:
+            continue  # 엑셀 임베디드 이미지 등 PDF 외 소스
         page = prod["image"]["page"]
         slot = prod["image"]["slot"]
         src = RENDER_DIR / f"page-{page:02d}.png"

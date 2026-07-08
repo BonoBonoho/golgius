@@ -24,7 +24,8 @@ export interface ProductSpec {
 
 export interface Product {
   id: string;
-  name: string;
+  name: string; // 영어 이름 (Leg Press …)
+  nameKo: string; // 한국어 이름 (레그 프레스 …)
   category: string; // 시리즈 (Plate Loaded, ISO …)
   bodyPart: string; // 운동 부위 대분류 (상체·하체·부위별)
   bodyDetail: string; // 세부 부위 (가슴, 등, 대퇴/둔근 …)
@@ -50,6 +51,7 @@ export const PRODUCT_CATEGORIES = [
   "MTS",
   "ISO",
   "Leverage",
+  "Nitro X",
   "프리웨이트·랙·멀티",
   "유산소",
 ] as const;
@@ -102,6 +104,7 @@ function toProduct(r: Record<string, unknown>): Product {
   return {
     id: String(r.id ?? ""),
     name: String(r.name ?? ""),
+    nameKo: String(r.nameKo ?? ""),
     category: String(r.category ?? ""),
     bodyPart: String(r.bodyPart ?? ""),
     bodyDetail: String(r.bodyDetail ?? ""),
@@ -164,6 +167,7 @@ export async function saveProduct(input: NewProduct & { id?: string }): Promise<
   const product: Product = {
     id: input.id ?? crypto.randomUUID(),
     name: input.name,
+    nameKo: input.nameKo,
     category: input.category,
     bodyPart: input.bodyPart,
     bodyDetail: input.bodyDetail,
