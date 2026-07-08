@@ -15,7 +15,10 @@ export async function generateMetadata({
   const { id } = await params;
   const p = await getProduct(id);
   if (!p || p.status !== "active") return { title: "기구 스토어 — 골지어스" };
-  return { title: `${p.name} — 골지어스 기구 스토어`, description: p.summary };
+  return {
+    title: `${p.nameKo || p.name} — 골지어스 기구 스토어`,
+    description: p.summary,
+  };
 }
 
 export default async function ProductPage({
@@ -82,8 +85,12 @@ export default async function ProductPage({
               </span>
             )}
           </div>
-          <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight">{p.name}</h1>
-          <p className="mt-1 font-mono text-sm text-dim">{p.brand}</p>
+          <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight">
+            {p.nameKo || p.name}
+          </h1>
+          <p className="mt-1 font-mono text-sm text-dim">
+            {p.nameKo ? `${p.name} · ${p.brand}` : p.brand}
+          </p>
 
           <p
             className="mt-5 text-2xl font-extrabold"

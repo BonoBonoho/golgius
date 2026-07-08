@@ -113,11 +113,13 @@ export default async function AdminProductsPage({
                         <ProductImage src={p.images[0]} alt={p.name} label={p.category.slice(0, 2)} className="h-full w-full" />
                       </div>
                       <div>
-                        <span className="font-semibold">{p.name}</span>
+                        <span className="font-semibold">{p.nameKo || p.name}</span>
                         {p.featured && (
                           <span className="ml-2 rounded-full border border-line px-1.5 py-0.5 font-mono text-[10px] text-gold">BEST</span>
                         )}
-                        <span className="block text-xs text-dim">{p.brand}</span>
+                        <span className="block text-xs text-dim">
+                          {p.nameKo ? `${p.name} · ${p.brand}` : p.brand}
+                        </span>
                       </div>
                     </div>
                   </td>

@@ -72,6 +72,7 @@ async function main() {
     const product = {
       id: raw.id,
       name: raw.name,
+      nameKo: raw.nameKo,
       category: raw.category,
       bodyPart: raw.bodyPart,
       bodyDetail: raw.bodyDetail,

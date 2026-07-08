@@ -137,7 +137,12 @@ export default async function ShopPage({
                   <span className="font-mono text-xs tracking-wider text-dim">{p.brand}</span>
                   <span className="font-mono text-[11px] text-dim">{p.category}</span>
                 </div>
-                <h2 className="mt-1.5 text-lg font-bold leading-snug">{p.name}</h2>
+                <h2 className="mt-1.5 text-lg font-bold leading-snug">
+                  {p.nameKo || p.name}
+                </h2>
+                {p.nameKo && (
+                  <p className="mt-0.5 text-xs font-medium text-dim">{p.name}</p>
+                )}
                 {(p.bodyPart || p.bodyDetail) && (
                   <p className="mt-1 text-xs text-dim">
                     {[p.bodyPart, p.bodyDetail].filter(Boolean).join(" · ")}
