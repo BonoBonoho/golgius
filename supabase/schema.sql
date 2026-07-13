@@ -82,6 +82,29 @@ create table if not exists public.orders (
 create index if not exists orders_created_at_idx on public.orders (created_at desc);
 create index if not exists orders_status_idx on public.orders (status);
 
+-- ── orders: 성원애드피아 자동 발주 파이프라인 (고객용 status와 분리) ──
+-- idle → approved → ordering → awaiting_payment → ordered / failed(→재시도 시 approved)
+alter table public.orders add column if not exists adpia_status text not null default 'idle';
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'orders_adpia_status_check'
+  ) then
+    alter table public.orders
+      add constraint orders_adpia_status_check
+      check (adpia_status in ('idle','approved','ordering','awaiting_payment','ordered','failed'));
+  end if;
+end $$;
+alter table public.orders add column if not exists adpia_job_log     jsonb not null default '[]'::jsonb;
+alter table public.orders add column if not exists adpia_screenshots text[] not null default '{}';
+alter table public.orders add column if not exists adpia_cart_url    text;
+alter table public.orders add column if not exists adpia_error       text;
+alter table public.orders add column if not exists adpia_started_at  timestamptz;
+alter table public.orders add column if not exists adpia_finished_at timestamptz;
+alter table public.orders add column if not exists adpia_attempts    int not null default 0;
+create index if not exists orders_adpia_status_idx
+  on public.orders (adpia_status) where adpia_status in ('approved','ordering');
+
 -- 시안 파일 비공개 버킷 (서버는 service_role로 업로드/서명 URL 생성)
 insert into storage.buckets (id, name, public)
 values ('order-files', 'order-files', false)

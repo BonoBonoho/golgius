@@ -15,9 +15,17 @@ export default function DesignPage() {
           <Link href="/" className="text-xl font-extrabold tracking-tight">
             GOLGIUS
           </Link>
-          <Link href="/order" className="text-sm text-dim transition hover:text-ink">
-            ← 일반 발주 폼
-          </Link>
+          <div className="flex items-center gap-5">
+            <Link
+              href="/order/namecard"
+              className="text-sm text-gold transition hover:opacity-80"
+            >
+              명함 디자인 AI ↗
+            </Link>
+            <Link href="/order" className="text-sm text-dim transition hover:text-ink">
+              ← 일반 발주 폼
+            </Link>
+          </div>
         </div>
       </header>
 

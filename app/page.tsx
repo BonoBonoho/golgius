@@ -51,6 +51,24 @@ export default function Home() {
             );
           })}
         </div>
+
+        {/* AI 명함 디자인 진입 배너 */}
+        <Link
+          href="/order/namecard"
+          className="group mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-surface px-8 py-6 transition hover:border-gold"
+        >
+          <div>
+            <p className="eyebrow">AI Design — Beta</p>
+            <h2 className="mt-2 text-xl font-extrabold">채팅으로 명함 디자인하기</h2>
+            <p className="mt-2 text-sm leading-relaxed text-dim">
+              AI가 실시간으로 시안을 그려주고, 확정하면 인쇄 발주까지 이어집니다.
+            </p>
+          </div>
+          <span className="ml-auto inline-flex items-center gap-2 text-sm font-semibold text-gold">
+            시작하기
+            <span className="transition group-hover:translate-x-1">→</span>
+          </span>
+        </Link>
       </div>
     </main>
   );

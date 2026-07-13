@@ -11,6 +11,14 @@ const extraOrigins = (process.env.ALLOWED_ORIGINS || '')
 
 const nextConfig = {
   output: 'standalone',
+  // 부모 디렉터리 lockfile로 인한 워크스페이스 오인 방지 — standalone을 평평하게 유지
+  outputFileTracingRoot: import.meta.dirname,
+  // resvg 네이티브 바이너리는 번들 대신 node_modules에서 로드
+  serverExternalPackages: ['@resvg/resvg-js'],
+  // 인쇄 PDF 렌더(resvg)가 쓰는 로컬 폰트를 standalone 번들에 포함
+  outputFileTracingIncludes: {
+    '/api/design-agent/**': ['./assets/fonts/**'],
+  },
   ...(extraOrigins.length
     ? {
         experimental: {

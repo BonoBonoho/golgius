@@ -6,11 +6,17 @@ import {
   signedUrl,
   isPersistent,
   ORDER_FLOW,
+  type AdpiaStatus,
   type Order,
   type OrderStatus,
 } from "@/lib/orders";
-import { setOrderStatus } from "@/app/actions/orders";
+import {
+  approveAdpiaOrder,
+  markAdpiaOrdered,
+  setOrderStatus,
+} from "@/app/actions/orders";
 import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
+import AdpiaLive from "@/components/admin/AdpiaLive";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +27,102 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   produced: "제작완료",
   canceled: "취소",
 };
+
+const ADPIA_LABEL: Record<AdpiaStatus, { text: string; color: string }> = {
+  idle: { text: "미발주", color: "var(--color-dim)" },
+  approved: { text: "발주 대기", color: "#d9a94a" },
+  ordering: { text: "발주 진행 중…", color: "#d9a94a" },
+  awaiting_payment: { text: "결제 대기", color: "#4da3ff" },
+  ordered: { text: "발주 완료", color: "#5cbf7a" },
+  failed: { text: "발주 실패", color: "#e2574a" },
+};
+
+// 성원애드피아 자동 발주 패널 — namecard-ai 주문에만 표시
+function AdpiaPanel({
+  order,
+  screenshotUrls,
+}: {
+  order: Order;
+  screenshotUrls: string[];
+}) {
+  const s = ADPIA_LABEL[order.adpiaStatus];
+  const canApprove =
+    (order.adpiaStatus === "idle" || order.adpiaStatus === "failed") &&
+    order.adpiaAttempts < 3;
+  const btn =
+    "rounded-md border px-2.5 py-1 text-xs font-semibold transition";
+
+  return (
+    <div className="mt-3 rounded-xl border border-line bg-base/50 p-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="eyebrow normal-case tracking-normal">애드피아 발주</span>
+        <span className="font-mono text-xs font-semibold" style={{ color: s.color }}>
+          ● {s.text}
+          {order.adpiaAttempts > 0 && ` (시도 ${order.adpiaAttempts}/3)`}
+        </span>
+
+        <div className="ml-auto flex flex-wrap items-center gap-1.5">
+          {canApprove && (
+            <form action={approveAdpiaOrder}>
+              <input type="hidden" name="id" value={order.id} />
+              <button
+                className={btn}
+                style={{ color: "var(--color-gold)", borderColor: "var(--color-gold)" }}
+              >
+                {order.adpiaStatus === "failed" ? "재시도" : "발주 승인"}
+              </button>
+            </form>
+          )}
+          {order.adpiaStatus === "awaiting_payment" && (
+            <>
+              {order.adpiaCartUrl && (
+                <a
+                  href={order.adpiaCartUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={btn}
+                  style={{ color: "#4da3ff", borderColor: "#4da3ff" }}
+                >
+                  애드피아에서 결제하기 ↗
+                </a>
+              )}
+              <form action={markAdpiaOrdered}>
+                <input type="hidden" name="id" value={order.id} />
+                <button
+                  className={btn}
+                  style={{ color: "#5cbf7a", borderColor: "#5cbf7a" }}
+                >
+                  발주완료 처리
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      </div>
+
+      {order.adpiaError && (
+        <p className="mt-2 font-mono text-xs" style={{ color: "#e2574a" }}>
+          {order.adpiaError}
+        </p>
+      )}
+
+      {screenshotUrls.length > 0 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {screenshotUrls.map((u, i) => (
+            <a key={i} href={u} target="_blank" rel="noopener noreferrer" className="shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={u}
+                alt={`발주 단계 ${i + 1}`}
+                className="h-20 rounded-md border border-line object-cover"
+              />
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const fmt = new Intl.DateTimeFormat("ko-KR", {
   dateStyle: "medium",
@@ -73,11 +175,18 @@ export default async function OrdersPage({
     orders.map(async (o) => ({
       order: o,
       fileUrl: o.designFile ? await signedUrl(o.designFile) : null,
+      screenshotUrls: (
+        await Promise.all(o.adpiaScreenshots.map((p) => signedUrl(p)))
+      ).filter((u): u is string => !!u),
     }))
+  );
+  const adpiaActive = orders.some(
+    (o) => o.adpiaStatus === "approved" || o.adpiaStatus === "ordering"
   );
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
+      <AdpiaLive active={adpiaActive} />
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">발주 요청</h1>
@@ -128,7 +237,7 @@ export default async function OrdersPage({
         </p>
       ) : view === "cards" ? (
         <div className="mt-8 space-y-4">
-          {withFiles.map(({ order, fileUrl }) => (
+          {withFiles.map(({ order, fileUrl, screenshotUrls }) => (
             <div key={order.id} className="rounded-2xl border border-line bg-surface p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -166,6 +275,10 @@ export default async function OrdersPage({
 
               {order.message && (
                 <p className="mt-2 text-sm text-dim">{order.message}</p>
+              )}
+
+              {order.productType === "namecard-ai" && (
+                <AdpiaPanel order={order} screenshotUrls={screenshotUrls} />
               )}
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
