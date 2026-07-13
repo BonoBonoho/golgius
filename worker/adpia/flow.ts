@@ -236,7 +236,7 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
       return `print.pdf 업로드 (${Math.round(pdf.length / 1024)}KB)`;
     });
 
-    // 5) 장바구니 담기
+    // 5) 장바구니 담기 → ⛔ 여기서 정지 (주문서 작성·결제는 관리자가 직접)
     await runStep(ctx, "add_to_cart", true, async () => {
       const btn = page
         .locator('a:has(img[alt*="장바구니"]), img[alt*="장바구니에담기"], a:has-text("장바구니에담기")')
@@ -247,21 +247,20 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
       return "장바구니 담기 완료";
     });
 
-    // 6) 장바구니 → 주문서 작성 진입 → ⛔ 정지
-    await runStep(ctx, "open_order_sheet", true, async () => {
+    // 6) 장바구니 확인 스크린샷 + 링크 저장 — 주문서작성 버튼은 클릭하지 않음
+    await runStep(ctx, "cart_ready", true, async () => {
       if (!page.url().includes("order_cart")) {
         await page.goto(ADPIA.base + ADPIA.cartPath, { waitUntil: "domcontentloaded" });
         await closePopups(page);
       }
-      const btn = page
-        .locator('a:has(img[alt*="주문서작성"]), a:has(img[alt*="주문정보입력"]), a:has-text("주문서작성")')
-        .first();
-      const label = (await btn.textContent().catch(() => "")) ?? "주문서작성";
-      assertClickSafe(label);
-      await btn.click({ timeout: 10000 });
-      await page.waitForLoadState("domcontentloaded");
-      result.cartUrl = page.url();
-      return `주문서 작성 페이지 도달: ${result.cartUrl} — 결제 직전 정지`;
+      result.cartUrl = ADPIA.base + ADPIA.cartPath;
+      // 담긴 항목 존재 확인 (비어 있으면 실패 처리)
+      const empty = await page
+        .locator("text=장바구니가 비어")
+        .count()
+        .catch(() => 0);
+      if (empty > 0) throw new Error("장바구니가 비어 있음 — 담기 실패");
+      return `장바구니 담김 확인: ${result.cartUrl} — 주문서 작성·결제는 관리자가 직접 진행`;
     });
 
     return result;
