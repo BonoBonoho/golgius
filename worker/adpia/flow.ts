@@ -149,17 +149,19 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
     await runStep(ctx, "login", false, async () => {
       await page.goto(ADPIA.base + ADPIA.loginPath, { waitUntil: "domcontentloaded" });
       await closePopups(page);
+      // 2026-07 실측: #mem_login_id(name=member_id) / #mem_login_pw(name=member_pw) / #icon_member_login(이미지 버튼)
       const idInput = page
-        .locator('input[name="m_id"], input[name="mem_id"], input[name="id"], input[name="userid"], #m_id, #login_id')
+        .locator('#mem_login_id, input[name="member_id"]')
         .first();
       const pwInput = page
-        .locator('input[type="password"]')
+        .locator('#mem_login_pw, input[name="member_pw"]')
         .first();
       await idInput.fill(id, { timeout: 10000 });
       await pwInput.fill(pw, { timeout: 10000 });
+      const loginBtn = page.locator("#icon_member_login").first();
       await Promise.all([
         page.waitForLoadState("domcontentloaded"),
-        pwInput.press("Enter"),
+        (await loginBtn.count()) > 0 ? loginBtn.click() : pwInput.press("Enter"),
       ]);
       await closePopups(page);
       // 성공 판정: 로그아웃 존재 (실패 시 여기서 throw)
