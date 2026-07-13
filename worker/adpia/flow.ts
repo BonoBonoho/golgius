@@ -239,11 +239,20 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
         await page.locator("#order_title").waitFor({ state: "visible", timeout: 10000 });
       }
 
-      // 파일 첨부: plupload는 팝업 안에 (hidden일 수 있는) input[type=file]을 둔다.
-      // setInputFiles는 hidden input에도 동작 → change 이벤트로 업로드 시작.
-      const fi = page.locator('input[type="file"]');
-      await fi.first().waitFor({ state: "attached", timeout: 8000 });
-      await fi.first().setInputFiles(filePath);
+      // 파일 첨부: plupload 업로더는 iframe(#iframe_InnoDS, plupload/index_ifr.php) 안에
+      // input[type=file]을 둔다 → 메인 문서엔 없음. 모든 프레임을 순회해 찾는다.
+      await page.waitForTimeout(2500); // iframe 로드 대기
+      let attached = false;
+      for (const frame of page.frames()) {
+        const inp = frame.locator('input[type="file"]');
+        const n = await inp.count().catch(() => 0);
+        if (n > 0) {
+          await inp.first().setInputFiles(filePath).catch(() => {});
+          attached = true;
+          break;
+        }
+      }
+      if (!attached) throw new Error("파일 input을 어떤 프레임에서도 찾지 못함");
 
       // 업로드 진행률 100% 또는 파일명 표시 대기 (최대 20초)
       await Promise.race([
