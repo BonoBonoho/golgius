@@ -275,11 +275,19 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
         .first();
       const label = (await btn.textContent().catch(() => "")) || "주문서작성";
       assertClickSafe(label); // 결제성 텍스트면 거부(주문서작성은 통과)
-      await Promise.all([
-        page.waitForLoadState("domcontentloaded"),
-        btn.click({ timeout: 10000 }),
-      ]);
-      await closePopups(page);
+      const beforeUrl = page.url();
+      await btn.click({ timeout: 10000 });
+      // 파일 업로드(주문서작성 클릭 시 시작) + 페이지 전환 완료까지 대기
+      await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+      // URL이 실제로 바뀔 때까지 (주문서 페이지 이동) — 최대 15초
+      await page
+        .waitForFunction(
+          (u) => location.href !== u && !location.href.endsWith("#"),
+          beforeUrl,
+          { timeout: 15000 }
+        )
+        .catch(() => {});
+      await page.waitForTimeout(1500);
       result.cartUrl = page.url();
       return `주문서 작성 페이지 도달: ${result.cartUrl} — 결제 직전 정지 (관리자가 예치금 결제)`;
     });
