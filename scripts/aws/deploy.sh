@@ -39,6 +39,11 @@ echo "== [4/6] 코드 rsync(자기완결 번들 → ~/app) + .env 업로드 =="
 rsync -az --delete -e "ssh ${SSHOPTS[*]}" "$STAGE"/ ubuntu@"$IP":~/app/
 scp "${SSHOPTS[@]}" .env.production.local ubuntu@"$IP":~/app/.env   # rsync --delete 뒤에 올려야 유지됨
 
+# resvg 네이티브 바이너리: 맥 빌드 번들엔 darwin만 담김 → EC2(linux-arm64)용을 현장 설치(멱등).
+# rsync --delete 가 매번 지우므로 rsync 직후에 실행해야 함.
+RESVG_VER=$(node -e "console.log(require('@resvg/resvg-js/package.json').version)")
+$SSH "cd ~/app && node -e 'require(\"@resvg/resvg-js\")' 2>/dev/null || npm install --no-save --no-package-lock @resvg/resvg-js-linux-arm64-gnu@$RESVG_VER"
+
 echo "== [5/6] systemd + Caddy =="
 $SSH 'sudo tee /etc/systemd/system/golgius-app.service >/dev/null <<EOF
 [Unit]
