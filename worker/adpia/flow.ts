@@ -229,10 +229,15 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
         .isVisible()
         .catch(() => false);
       if (!titleVisible) {
-        // #btn_cart_save가 페이지에 여러 개(숨김 포함) → 화면에 보이는 하단 버튼만.
-        const opener = page.locator("#btn_cart_save:visible").first();
-        await opener.scrollIntoViewIfNeeded().catch(() => {});
-        await opener.click({ timeout: 8000, force: true });
+        // #btn_cart_save는 jQuery 이벤트 바인딩(onclick 속성 없음) + 가시성 이슈.
+        // DOM .click()을 직접 호출하면 가시성 무관하게 핸들러가 발동한다.
+        // 상품페이지 버튼(팝업 밖의 #btn_cart_save)으로 장바구니 팝업을 연다.
+        await page.evaluate(() => {
+          const all = Array.from(document.querySelectorAll("#btn_cart_save"));
+          const opener =
+            all.find((b) => !b.closest("#estimate_box_popup")) || all[0];
+          (opener as HTMLElement | undefined)?.click();
+        });
         await page.locator("#order_title").waitFor({ state: "visible", timeout: 10000 });
       }
 
@@ -268,13 +273,16 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
     // 5) 팝업의 [장바구니에담기] 클릭 → 계정 장바구니(DB)에 저장 → ⛔ 정지.
     // 주문서작성(direct_order)은 워커 세션 종속이라 관리자가 못 이어받음 → 장바구니 경로 사용.
     await runStep(ctx, "add_to_cart", true, async () => {
-      // 팝업 안 visible 버튼으로 스코프(상품페이지 하단 동일 id 버튼과 구분)
-      const btn = page.locator("#estimate_box_popup #btn_cart_save:visible").first();
+      // 팝업 안 [장바구니 담기] = #estimate_box_popup 안의 #btn_cart_save (jQuery 이벤트).
+      // DOM .click() 직접 호출로 가시성 무관하게 발동 → 파일 업로드 + confirm 다이얼로그(자동 수락).
       assertClickSafe("장바구니에담기");
-      // 담기 클릭 → 파일 업로드 + confirm 다이얼로그(자동 수락 설정됨)
-      // 팝업 하단 버튼이라 스크롤 후 force 클릭(가림/뷰포트밖 대비)
-      await btn.scrollIntoViewIfNeeded().catch(() => {});
-      await btn.click({ timeout: 10000, force: true });
+      const clicked = await page.evaluate(() => {
+        const btn = document.querySelector("#estimate_box_popup #btn_cart_save");
+        if (!btn) return false;
+        (btn as HTMLElement).click();
+        return true;
+      });
+      if (!clicked) throw new Error("팝업 내 [장바구니 담기] 버튼을 찾지 못함");
       await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
       await page.waitForTimeout(2000);
       // 장바구니 페이지로 이동 확인, 아니면 직접 이동해 담긴 항목 확인
