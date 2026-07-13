@@ -1,4 +1,5 @@
 /node_modules
+worker/node_modules
 /.next
 /out
 .env*.local
@@ -11,4 +12,5 @@ next-env.d.ts
 /supabase/.branches
 .vercel
 .env*
+!worker/.env.example
 __pycache__/

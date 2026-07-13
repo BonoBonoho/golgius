@@ -1,6 +1,8 @@
 /* Korean: Pretendard / Latin labels: IBM Plex Mono — @import는 최상단에 위치해야 함 */
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendard-dynamic-subset.css");
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+/* 명함 디자인 AI 프리뷰용 세리프 (서버 PDF 폰트와 동일 세트) */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap");
 
 @import "tailwindcss";
 
