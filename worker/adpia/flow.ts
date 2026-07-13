@@ -27,13 +27,13 @@ export type FlowResult = {
   priceText: string;
 };
 
+// 공지/이벤트 팝업 전용 — "닫기"·범용 .close는 파일업로드 팝업을 오폭할 수 있어 제외.
 const POPUP_CLOSERS = [
   "text=오늘 하루 보지 않기",
   "text=오늘하루 열지않기",
-  "text=닫기",
-  ".layer_popup .close",
-  ".popup .close",
-  "[id^=popup] .close",
+  "text=하루 동안 열지 않기",
+  ".main_popup .close",
+  "#popup_notice .close",
 ];
 
 async function closePopups(page: Page): Promise<void> {
@@ -221,35 +221,39 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
       const filePath = path.join(dir, `${row.name}_명함.pdf`);
       writeFileSync(filePath, pdf);
 
-      // 팝업 열기 (바로주문/장바구니 버튼)
-      await page.locator("#btn_order, #btn_cart, #btn_order3").first().click({ timeout: 8000 });
-      await page.locator("#order_title").waitFor({ state: "visible", timeout: 10000 });
-
-      // 파일 첨부: plupload는 "파일추가" 클릭 시 파일 선택창 → filechooser로 잡는다.
-      // 실패 시 hidden input[type=file] 직접 세팅으로 폴백.
-      let attached = false;
-      try {
-        const [chooser] = await Promise.all([
-          page.waitForEvent("filechooser", { timeout: 6000 }),
-          page.locator("text=파일추가").first().click({ timeout: 5000 }),
-        ]);
-        await chooser.setFiles(filePath);
-        attached = true;
-      } catch {
-        const fi = page.locator('input[type="file"]');
-        if ((await fi.count()) > 0) {
-          await fi.first().setInputFiles(filePath).catch(() => {});
-          attached = true;
-        }
+      // 팝업 열기 (이미 열려 있으면 스킵). 하단 버튼이라 force 클릭.
+      const titleVisible = await page
+        .locator("#order_title")
+        .isVisible()
+        .catch(() => false);
+      if (!titleVisible) {
+        await page
+          .locator("#btn_order3, #btn_order, #btn_cart")
+          .first()
+          .scrollIntoViewIfNeeded()
+          .catch(() => {});
+        await page
+          .locator("#btn_order3, #btn_order, #btn_cart")
+          .first()
+          .click({ timeout: 8000, force: true });
+        await page.locator("#order_title").waitFor({ state: "visible", timeout: 10000 });
       }
-      if (!attached) throw new Error("파일추가 UI를 찾지 못함");
-      // 업로드 진행률 100% 대기 (최대 20초)
-      await page.waitForTimeout(3000);
-      await page
-        .locator("text=100%")
-        .first()
-        .waitFor({ state: "visible", timeout: 17000 })
-        .catch(() => {});
+
+      // 파일 첨부: plupload는 팝업 안에 (hidden일 수 있는) input[type=file]을 둔다.
+      // setInputFiles는 hidden input에도 동작 → change 이벤트로 업로드 시작.
+      const fi = page.locator('input[type="file"]');
+      await fi.first().waitFor({ state: "attached", timeout: 8000 });
+      await fi.first().setInputFiles(filePath);
+
+      // 업로드 진행률 100% 또는 파일명 표시 대기 (최대 20초)
+      await Promise.race([
+        page.locator("text=100%").first().waitFor({ state: "visible", timeout: 20000 }),
+        page
+          .locator(`text=${row.name}_명함`)
+          .first()
+          .waitFor({ state: "visible", timeout: 20000 }),
+      ]).catch(() => {});
+      await page.waitForTimeout(1500);
 
       await page.locator("#order_title").fill(`${row.name} 명함 (골지어스 자동발주)`).catch(() => {});
       return `PDF 첨부 + 주문제목 입력 완료 (${Math.round(pdf.length / 1024)}KB)`;
