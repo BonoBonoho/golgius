@@ -221,14 +221,15 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
       const filePath = path.join(dir, `${row.name}_명함.pdf`);
       writeFileSync(filePath, pdf);
 
-      // 파일업로드 팝업 열기 (이미 열려 있으면 스킵). 하단 버튼이라 force 클릭.
-      // 장바구니/바로주문 어느 쪽이든 동일 팝업(#estimate_box_popup)이 뜬다.
+      // 파일업로드 팝업 열기 (이미 열려 있으면 스킵). 하단 버튼이라 scroll+force.
+      // ★ 반드시 "장바구니"(#btn_cart_save)로 열어야 팝업 하단에 [장바구니 담기]가 표시된다.
+      //   "바로주문"으로 열면 [주문서 작성](세션종속)만 표시됨.
       const titleVisible = await page
         .locator("#order_title")
         .isVisible()
         .catch(() => false);
       if (!titleVisible) {
-        const opener = page.locator("#btn_cart, #btn_order3, #btn_order").first();
+        const opener = page.locator("#btn_cart_save").first();
         await opener.scrollIntoViewIfNeeded().catch(() => {});
         await opener.click({ timeout: 8000, force: true });
         await page.locator("#order_title").waitFor({ state: "visible", timeout: 10000 });
