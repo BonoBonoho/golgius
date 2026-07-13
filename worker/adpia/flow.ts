@@ -270,7 +270,9 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
       const btn = page.locator("#estimate_box_popup #btn_cart_save").first();
       assertClickSafe("장바구니에담기");
       // 담기 클릭 → 파일 업로드 + confirm 다이얼로그(자동 수락 설정됨)
-      await btn.click({ timeout: 10000 });
+      // 팝업 하단 버튼이라 스크롤 후 force 클릭(가림/뷰포트밖 대비)
+      await btn.scrollIntoViewIfNeeded().catch(() => {});
+      await btn.click({ timeout: 10000, force: true });
       await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
       await page.waitForTimeout(2000);
       // 장바구니 페이지로 이동 확인, 아니면 직접 이동해 담긴 항목 확인
