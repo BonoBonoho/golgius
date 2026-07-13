@@ -221,21 +221,16 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
       const filePath = path.join(dir, `${row.name}_명함.pdf`);
       writeFileSync(filePath, pdf);
 
-      // 팝업 열기 (이미 열려 있으면 스킵). 하단 버튼이라 force 클릭.
+      // 파일업로드 팝업 열기 (이미 열려 있으면 스킵). 하단 버튼이라 force 클릭.
+      // 장바구니/바로주문 어느 쪽이든 동일 팝업(#estimate_box_popup)이 뜬다.
       const titleVisible = await page
         .locator("#order_title")
         .isVisible()
         .catch(() => false);
       if (!titleVisible) {
-        await page
-          .locator("#btn_order3, #btn_order, #btn_cart")
-          .first()
-          .scrollIntoViewIfNeeded()
-          .catch(() => {});
-        await page
-          .locator("#btn_order3, #btn_order, #btn_cart")
-          .first()
-          .click({ timeout: 8000, force: true });
+        const opener = page.locator("#btn_cart, #btn_order3, #btn_order").first();
+        await opener.scrollIntoViewIfNeeded().catch(() => {});
+        await opener.click({ timeout: 8000, force: true });
         await page.locator("#order_title").waitFor({ state: "visible", timeout: 10000 });
       }
 
@@ -268,28 +263,29 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
       return `PDF 첨부 + 주문제목 입력 완료 (${Math.round(pdf.length / 1024)}KB)`;
     });
 
-    // 5) 팝업의 [주문서 작성] 클릭 → 주문서 페이지 도달 → ⛔ 결제 직전 정지
-    await runStep(ctx, "open_order_sheet", true, async () => {
-      const btn = page
-        .locator('#btn_order_form, img[alt*="주문서작성"], a:has-text("주문서 작성"), input[value*="주문서"]')
-        .first();
-      const label = (await btn.textContent().catch(() => "")) || "주문서작성";
-      assertClickSafe(label); // 결제성 텍스트면 거부(주문서작성은 통과)
-      const beforeUrl = page.url();
+    // 5) 팝업의 [장바구니에담기] 클릭 → 계정 장바구니(DB)에 저장 → ⛔ 정지.
+    // 주문서작성(direct_order)은 워커 세션 종속이라 관리자가 못 이어받음 → 장바구니 경로 사용.
+    await runStep(ctx, "add_to_cart", true, async () => {
+      // 팝업 안 버튼으로 스코프(상품페이지 하단 동일 id 버튼과 구분)
+      const btn = page.locator("#estimate_box_popup #btn_cart_save").first();
+      assertClickSafe("장바구니에담기");
+      // 담기 클릭 → 파일 업로드 + confirm 다이얼로그(자동 수락 설정됨)
       await btn.click({ timeout: 10000 });
-      // 파일 업로드(주문서작성 클릭 시 시작) + 페이지 전환 완료까지 대기
       await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
-      // URL이 실제로 바뀔 때까지 (주문서 페이지 이동) — 최대 15초
-      await page
-        .waitForFunction(
-          (u) => location.href !== u && !location.href.endsWith("#"),
-          beforeUrl,
-          { timeout: 15000 }
-        )
-        .catch(() => {});
-      await page.waitForTimeout(1500);
-      result.cartUrl = page.url();
-      return `주문서 작성 페이지 도달: ${result.cartUrl} — 결제 직전 정지 (관리자가 예치금 결제)`;
+      await page.waitForTimeout(2000);
+      // 장바구니 페이지로 이동 확인, 아니면 직접 이동해 담긴 항목 확인
+      if (!page.url().includes("order_cart")) {
+        await page
+          .goto(ADPIA.base + ADPIA.cartPath, { waitUntil: "networkidle" })
+          .catch(() => {});
+      }
+      result.cartUrl = ADPIA.base + ADPIA.cartPath;
+      const empty = await page
+        .locator("text=장바구니가 비어")
+        .count()
+        .catch(() => 0);
+      if (empty > 0) throw new Error("장바구니가 비어 있음 — 담기 실패");
+      return `장바구니 담김 완료: ${result.cartUrl} — 관리자가 로그인 후 결제 진행`;
     });
 
     return result;
