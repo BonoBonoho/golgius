@@ -229,7 +229,8 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
         .isVisible()
         .catch(() => false);
       if (!titleVisible) {
-        const opener = page.locator("#btn_cart_save").first();
+        // #btn_cart_save가 페이지에 여러 개(숨김 포함) → 화면에 보이는 하단 버튼만.
+        const opener = page.locator("#btn_cart_save:visible").first();
         await opener.scrollIntoViewIfNeeded().catch(() => {});
         await opener.click({ timeout: 8000, force: true });
         await page.locator("#order_title").waitFor({ state: "visible", timeout: 10000 });
@@ -267,8 +268,8 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
     // 5) 팝업의 [장바구니에담기] 클릭 → 계정 장바구니(DB)에 저장 → ⛔ 정지.
     // 주문서작성(direct_order)은 워커 세션 종속이라 관리자가 못 이어받음 → 장바구니 경로 사용.
     await runStep(ctx, "add_to_cart", true, async () => {
-      // 팝업 안 버튼으로 스코프(상품페이지 하단 동일 id 버튼과 구분)
-      const btn = page.locator("#estimate_box_popup #btn_cart_save").first();
+      // 팝업 안 visible 버튼으로 스코프(상품페이지 하단 동일 id 버튼과 구분)
+      const btn = page.locator("#estimate_box_popup #btn_cart_save:visible").first();
       assertClickSafe("장바구니에담기");
       // 담기 클릭 → 파일 업로드 + confirm 다이얼로그(자동 수락 설정됨)
       // 팝업 하단 버튼이라 스크롤 후 force 클릭(가림/뷰포트밖 대비)
