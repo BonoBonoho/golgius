@@ -62,13 +62,13 @@ async function processOne(): Promise<boolean> {
     console.log(`[worker] 결제 대기 도달: ${row.id} ${result.cartUrl}`);
     await notifyAdmin(
       `[골지어스] 명함 발주 결제 대기 — ${row.name}`,
-      `<p>성원애드피아 파일 첨부 + 주문서 작성 페이지까지 완료됐습니다. 예치금 결제만 진행하면 됩니다.</p>
+      `<p>성원애드피아 장바구니에 담기까지 완료됐습니다(파일 첨부 포함). 애드피아에 로그인해 장바구니에서 결제만 진행하면 됩니다.</p>
        <ul>
          <li>고객: ${row.name} (${row.phone})</li>
          <li>옵션: ${JSON.stringify(row.options)}</li>
          <li>표시 가격: ${result.priceText || "미확인"}</li>
        </ul>
-       <p><a href="${result.cartUrl}">주문서 페이지</a> / 관리자 화면에서 스크린샷 확인 → 예치금 결제 → 발주완료 처리하세요.</p>`
+       <p><a href="${result.cartUrl}">장바구니 열기</a>(로그인 필요) / 관리자 화면에서 스크린샷 확인 → 결제 → 발주완료 처리하세요.</p>`
     );
   } catch (e) {
     const msg = maskSecrets((e as Error).message ?? String(e)).slice(0, 400);

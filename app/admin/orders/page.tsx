@@ -32,7 +32,7 @@ const ADPIA_LABEL: Record<AdpiaStatus, { text: string; color: string }> = {
   idle: { text: "미발주", color: "var(--color-dim)" },
   approved: { text: "발주 대기", color: "#d9a94a" },
   ordering: { text: "발주 진행 중…", color: "#d9a94a" },
-  awaiting_payment: { text: "주문서 작성 완료 — 결제 대기", color: "#4da3ff" },
+  awaiting_payment: { text: "장바구니 담김 — 결제 대기", color: "#4da3ff" },
   ordered: { text: "발주 완료", color: "#5cbf7a" },
   failed: { text: "발주 실패", color: "#e2574a" },
 };
@@ -83,7 +83,7 @@ function AdpiaPanel({
                   className={btn}
                   style={{ color: "#4da3ff", borderColor: "#4da3ff" }}
                 >
-                  애드피아 주문서 열기 ↗
+                  애드피아 장바구니 열기 ↗
                 </a>
               )}
               <form action={markAdpiaOrdered}>
