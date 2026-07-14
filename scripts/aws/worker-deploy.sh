@@ -5,20 +5,24 @@
 # 준비물:
 #   · worker/.env.production   (로컬, gitignore) — worker/.env.example 참고해 작성
 #     SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / SWADPIA_ID / SWADPIA_PW / ANTHROPIC_API_KEY
-# 사용: bash scripts/aws/worker-deploy.sh <EC2_IP>
+# 접속: SSM 터널(SSH over SSM) — 공인 IP·22번 포트 불필요(~/.ssh/config의 Host i-* 처리).
+# 사용: bash scripts/aws/worker-deploy.sh <EC2_INSTANCE_ID(i-...) 또는 IP>
 set -euo pipefail
-IP="${1:?사용법: worker-deploy.sh <EC2_IP>}"
+TARGET="${1:?사용법: worker-deploy.sh <i-인스턴스ID 또는 IP>}"
 KEY=~/.ssh/golgius.pem
-SSHOPTS=(-i "$KEY" -o StrictHostKeyChecking=accept-new)
-SSH="ssh ${SSHOPTS[*]} ubuntu@$IP"
+case "$TARGET" in
+  i-*) SSHOPTS=(-o StrictHostKeyChecking=accept-new) ;;
+  *)   SSHOPTS=(-i "$KEY" -o StrictHostKeyChecking=accept-new) ;;
+esac
+SSH="ssh ${SSHOPTS[*]} ubuntu@$TARGET"
 
 [ -f worker/.env.production ] || { echo "⚠️ worker/.env.production 없음 — worker/.env.example 참고해 작성 후 재실행"; exit 1; }
 
 echo "== [1/5] 소스 rsync (node_modules 제외 — EC2에서 npm ci) =="
 rsync -az --delete \
   --exclude node_modules --exclude .env --exclude .env.production \
-  -e "ssh ${SSHOPTS[*]}" worker/ ubuntu@"$IP":~/worker/
-scp "${SSHOPTS[@]}" worker/.env.production ubuntu@"$IP":~/worker/.env
+  -e "ssh ${SSHOPTS[*]}" worker/ ubuntu@"$TARGET":~/worker/
+scp "${SSHOPTS[@]}" worker/.env.production ubuntu@"$TARGET":~/worker/.env
 $SSH 'chmod 600 ~/worker/.env'
 
 echo "== [2/5] swap 2GB (멱등 — t4g.small에서 Chromium 여유) =="
