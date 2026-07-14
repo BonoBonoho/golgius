@@ -16,8 +16,10 @@
 - **배포**:
   ```bash
   cd ~/Documents/golgius-aws
-  bash scripts/aws/deploy.sh 43.200.50.83 golgius-web-624627264933 E1PXGQWLU7OP7S \
+  # SSM 터널 배포(공인 IP·22번 포트 불필요) — 첫 인자 = 인스턴스 ID
+  bash scripts/aws/deploy.sh i-0e8f0108342602704 golgius-web-624627264933 E1PXGQWLU7OP7S \
     "golgius.biz,www.golgius.biz,golgius.milestone-x.app"
+  # 발주 워커: bash scripts/aws/worker-deploy.sh i-0e8f0108342602704
   ```
   ⚠️ `NEXT_PUBLIC_*`·`ALLOWED_ORIGINS`는 빌드시 박힘 → 도메인 바뀌면 재빌드.
 - **DB**: 전용 Supabase `dgrdkneddmybkepylpdz` (Milestone과 별개).
@@ -45,7 +47,7 @@
 
 ## 3) 함정·주의
 - **AWS provision/teardown**: `Name/Project` 태그로만 조작. EC2 `i-0e8f0108342602704` 건드리지 말 것.
-- **IP 바뀌면** SG `sg-0120d6d5ad294571b` 22번에 현재 IP 추가.
+- **SSH 접속은 SSM 터널**(공인 IP·22번 포트 불필요). `~/.ssh/config`의 `Host i-* … ProxyCommand aws ssm start-session …` + EC2 역할 `golgius-app-role`에 `AmazonSSMManagedInstanceCore` 부여됨. 배포·수동 SSH 모두 `ubuntu@i-0e8f0108342602704`로. (구방식: IP 인자도 스크립트가 지원하나 그땐 SG 22번에 현재 IP 추가 필요. SSM 정상 동작 확인 후 SG 22번 인바운드 규칙은 정리 권장.)
 - **CloudFront→EC2는 http** → Caddy `X-Forwarded-Proto https` (deploy.sh 반영).
 - **golgius.biz Route53**: `Z06368082MVHE8PUOST0W`
 - **작업 격리**: `golgius-aws@aws-restore`. 커밋 전 브랜치 확인.
