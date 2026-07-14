@@ -5,16 +5,23 @@
 #   · 빌드시  : Next 가 자동 로드 → NEXT_PUBLIC_* 인라인.
 #   · 런타임  : EC2 ~/app/.env 로 업로드되어 `node --env-file=.env` 로 로드(민감값 포함).
 # t4g.small(2GB) 에서 Next 빌드는 무겁다 → 빌드는 로컬, EC2 엔 standalone 산출물만 전송(npm ci 불필요).
-# 사용: bash scripts/aws/deploy.sh <EC2_IP> <S3버킷> [CF배포ID] [ALLOWED_ORIGINS(콤마, 스킴없는 호스트)]
+# 접속: SSM Session Manager 터널(SSH over SSM) — 공인 IP·22번 포트 불필요.
+#   ~/.ssh/config 의 'Host i-* … ProxyCommand aws ssm start-session …' 가 처리.
+#   (IP 인자도 그대로 지원 — 그 경우 기존 직접 SSH. 단 SG 22번에 현재 IP 필요.)
+# 사용: bash scripts/aws/deploy.sh <EC2_INSTANCE_ID(i-...) 또는 IP> <S3버킷> [CF배포ID] [ALLOWED_ORIGINS(콤마, 스킴없는 호스트)]
 set -euo pipefail
-IP="${1:?사용법: deploy.sh <EC2_IP> <버킷> [CF_ID] [ALLOWED_ORIGINS]}"
+TARGET="${1:?사용법: deploy.sh <i-인스턴스ID 또는 IP> <버킷> [CF_ID] [ALLOWED_ORIGINS]}"
 BUCKET="${2:?S3 버킷 필요}"
 CF_ID="${3:-}"
 ALLOWED_ORIGINS="${4:-}"
 REGION="${AWS_REGION:-ap-northeast-2}"
 KEY=~/.ssh/golgius.pem
-SSHOPTS=(-i "$KEY" -o StrictHostKeyChecking=accept-new)
-SSH="ssh ${SSHOPTS[*]} ubuntu@$IP"
+# instance-id(i-…)면 ssh config가 ProxyCommand+IdentityFile 처리 → -i 불필요. IP면 직접.
+case "$TARGET" in
+  i-*) SSHOPTS=(-o StrictHostKeyChecking=accept-new) ;;
+  *)   SSHOPTS=(-i "$KEY" -o StrictHostKeyChecking=accept-new) ;;
+esac
+SSH="ssh ${SSHOPTS[*]} ubuntu@$TARGET"
 
 [ -f .env.production.local ] || { echo "⚠️ .env.production.local 없음 — 프로덕션 env 파일 준비 후 재실행"; exit 1; }
 
@@ -36,8 +43,8 @@ $SSH 'command -v node >/dev/null || (curl -fsSL https://deb.nodesource.com/setup
 $SSH 'command -v caddy >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl >/dev/null && curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt | sudo tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null && sudo apt-get update -qq && sudo apt-get install -y caddy)'
 
 echo "== [4/6] 코드 rsync(자기완결 번들 → ~/app) + .env 업로드 =="
-rsync -az --delete -e "ssh ${SSHOPTS[*]}" "$STAGE"/ ubuntu@"$IP":~/app/
-scp "${SSHOPTS[@]}" .env.production.local ubuntu@"$IP":~/app/.env   # rsync --delete 뒤에 올려야 유지됨
+rsync -az --delete -e "ssh ${SSHOPTS[*]}" "$STAGE"/ ubuntu@"$TARGET":~/app/
+scp "${SSHOPTS[@]}" .env.production.local ubuntu@"$TARGET":~/app/.env   # rsync --delete 뒤에 올려야 유지됨
 
 # resvg 네이티브 바이너리: 맥 빌드 번들엔 darwin만 담김 → EC2(linux-arm64)용을 현장 설치(멱등).
 # rsync --delete 가 매번 지우므로 rsync 직후에 실행해야 함.
@@ -79,5 +86,5 @@ if [ -n "$CF_ID" ]; then
   aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/_next/static/*" >/dev/null 2>&1 || true
 fi
 echo "--- EC2 로컬(:8787) ---"; $SSH 'curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8787/ || true'
-echo "--- EC2 공개(:80) ---";  curl -s -m 8 -o /dev/null -w "%{http_code}\n" "http://$IP/" || echo "(80 실패 — SG/Caddy 점검)"
+echo "--- 공개(https) ---";  curl -s -m 10 -o /dev/null -w "%{http_code}\n" "https://golgius.biz/" || echo "(공개 실패 — CloudFront/Caddy 점검)"
 echo "완료. ALLOWED_ORIGINS='${ALLOWED_ORIGINS:-(미설정)}'"
