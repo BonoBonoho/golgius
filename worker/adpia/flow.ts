@@ -229,11 +229,10 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
         .isVisible()
         .catch(() => false);
       if (!titleVisible) {
-        // 파일업로드 팝업("주문정보입력" 다이얼로그)을 여는 전역 함수 직접 호출.
-        // 버튼 클릭 가시성 문제를 완전히 우회한다.
+        // 하단 "장바구니"(#btn_cart, cartBtn.jpg)를 열어야 팝업에 [장바구니 담기]가 표시된다.
+        // (#btn_order=바로주문 buyBtn.jpg는 [주문서 작성]만 → 세션종속). jQuery 이벤트라 DOM .click().
         await page.evaluate(() => {
-          const w = window as unknown as { viewOrderForm?: () => void };
-          if (typeof w.viewOrderForm === "function") w.viewOrderForm();
+          (document.querySelector("#btn_cart") as HTMLElement | null)?.click();
         });
         await page.locator("#order_title").waitFor({ state: "visible", timeout: 10000 });
       }
