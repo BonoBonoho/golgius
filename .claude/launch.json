@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "naver-ed",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3139", "--directory", "/Users/bonohan/Documents/naver-smartplace-extractor/web"],
+      "port": 3139
+    },
+    {
       "name": "golgius",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
