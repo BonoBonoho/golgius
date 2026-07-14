@@ -229,14 +229,11 @@ export async function runAdpiaOrder(row: AdpiaOrderRow, dryRun: boolean): Promis
         .isVisible()
         .catch(() => false);
       if (!titleVisible) {
-        // #btn_cart_save는 jQuery 이벤트 바인딩(onclick 속성 없음) + 가시성 이슈.
-        // DOM .click()을 직접 호출하면 가시성 무관하게 핸들러가 발동한다.
-        // 상품페이지 버튼(팝업 밖의 #btn_cart_save)으로 장바구니 팝업을 연다.
+        // 파일업로드 팝업("주문정보입력" 다이얼로그)을 여는 전역 함수 직접 호출.
+        // 버튼 클릭 가시성 문제를 완전히 우회한다.
         await page.evaluate(() => {
-          const all = Array.from(document.querySelectorAll("#btn_cart_save"));
-          const opener =
-            all.find((b) => !b.closest("#estimate_box_popup")) || all[0];
-          (opener as HTMLElement | undefined)?.click();
+          const w = window as unknown as { viewOrderForm?: () => void };
+          if (typeof w.viewOrderForm === "function") w.viewOrderForm();
         });
         await page.locator("#order_title").waitFor({ state: "visible", timeout: 10000 });
       }
