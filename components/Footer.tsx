@@ -48,8 +48,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-line pt-6 text-xs text-dim">
-          © {new Date().getFullYear()} {site.name}. All rights reserved.
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-xs text-dim">
+          <span>© {new Date().getFullYear()} {site.name}. All rights reserved.</span>
+          <nav className="flex flex-wrap gap-4">
+            <Link href="/order/namecard" className="transition hover:text-ink">명함 디자인</Link>
+            <Link href="/order" className="transition hover:text-ink">발주 요청</Link>
+            <Link href="/order/design" className="transition hover:text-ink">수건·운동복 디자인</Link>
+            <Link href="/admin" className="transition hover:text-ink">관리자</Link>
+          </nav>
         </div>
       </div>
     </footer>
