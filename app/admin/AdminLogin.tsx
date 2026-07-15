@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import { login, type LoginState } from "@/app/actions/admin";
+import { login } from "@/app/actions/admin";
+import { authInitial } from "@/app/admin/auth-state";
 
-const initial: LoginState = { error: "" };
+const initial = authInitial;
 
 export default function AdminLogin({ configured }: { configured: boolean }) {
   const [state, action, pending] = useActionState(login, initial);
