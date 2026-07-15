@@ -43,7 +43,7 @@ export async function claimNextApproved(orderId?: string): Promise<AdpiaOrderRow
   const { url } = env();
   const filter = orderId
     ? `id=eq.${orderId}&adpia_status=eq.approved`
-    : `adpia_status=eq.approved&product_type=eq.namecard-ai`;
+    : `adpia_status=eq.approved&product_type=in.(namecard-ai,namecard-upload)`;
   const list = await fetch(
     `${url}/rest/v1/${TABLE}?${filter}&select=${SELECT}&order=updated_at.asc&limit=1`,
     { headers: headers() }

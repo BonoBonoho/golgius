@@ -37,7 +37,7 @@ const ADPIA_LABEL: Record<AdpiaStatus, { text: string; color: string }> = {
   failed: { text: "발주 실패", color: "#e2574a" },
 };
 
-// 성원애드피아 자동 발주 패널 — namecard-ai 주문에만 표시
+// 성원애드피아 자동 발주 패널 — namecard-ai/namecard-upload 주문에 표시
 function AdpiaPanel({
   order,
   screenshotUrls,
@@ -277,7 +277,8 @@ export default async function OrdersPage({
                 <p className="mt-2 text-sm text-dim">{order.message}</p>
               )}
 
-              {order.productType === "namecard-ai" && (
+              {(order.productType === "namecard-ai" ||
+                order.productType === "namecard-upload") && (
                 <AdpiaPanel order={order} screenshotUrls={screenshotUrls} />
               )}
 
