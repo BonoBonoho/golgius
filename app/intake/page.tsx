@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import IntakeForm from "@/components/IntakeForm";
+import SiteHeader from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
   title: "서류·정보 제출 — 골지어스",
@@ -16,13 +16,7 @@ export default async function IntakePage({
   const { lead } = await searchParams;
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-line">
-        <div className="mx-auto flex h-16 max-w-3xl items-center px-5">
-          <Link href="/" className="text-xl font-extrabold tracking-tight">
-            GOLGIUS
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-14">
         <p className="eyebrow">Document &amp; Info</p>

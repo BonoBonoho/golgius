@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import OrderForm from "@/components/OrderForm";
+import SiteHeader from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
   title: "단체복·수건 발주 — 골지어스",
@@ -10,16 +11,7 @@ export const metadata: Metadata = {
 export default function OrderPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-line">
-        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-5">
-          <Link href="/" className="text-xl font-extrabold tracking-tight">
-            GOLGIUS
-          </Link>
-          <Link href="/" className="text-sm text-dim transition hover:text-ink">
-            ← 홈으로
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-16">
         <p className="eyebrow">Order</p>
