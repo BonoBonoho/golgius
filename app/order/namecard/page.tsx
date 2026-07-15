@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import NamecardAgent from "@/components/namecard/NamecardAgent";
+import NamecardTabs from "@/components/namecard/NamecardTabs";
 
 export const metadata: Metadata = {
   title: "명함 디자인 AI — 골지어스",
@@ -41,7 +41,7 @@ export default function NamecardPage() {
         </p>
 
         <div className="mt-8">
-          <NamecardAgent />
+          <NamecardTabs />
         </div>
       </main>
     </div>

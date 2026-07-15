@@ -59,3 +59,47 @@ export async function renderPrintPdf(
 
   return pdf.save();
 }
+
+// 고객 업로드 이미지 → 인쇄용 PDF. 각 이미지를 작업 사이즈 페이지에 cover(꽉 채움).
+// 비율이 다르면 넘치는 부분은 재단됨(안내 문구로 고지). png/jpeg만.
+export type UploadImage = { bytes: Uint8Array; type: string };
+
+export async function imagesToPrintPdf(
+  images: UploadImage[],
+  preset: ProductPreset = PRODUCT_PRESETS.namecard
+): Promise<Uint8Array> {
+  const { w, h } = workSize(preset);
+  const pageW = mmToPt(w);
+  const pageH = mmToPt(h);
+  const pageRatio = pageW / pageH;
+
+  const pdf = await PDFDocument.create();
+  pdf.setTitle(`GOLGIUS ${preset.label} — ${preset.trimMm.w}x${preset.trimMm.h}mm (업로드)`);
+  pdf.setCreator("GOLGIUS");
+
+  for (const img of images) {
+    const embedded = /png/i.test(img.type)
+      ? await pdf.embedPng(img.bytes)
+      : await pdf.embedJpg(img.bytes);
+    const page = pdf.addPage([pageW, pageH]);
+    // cover: 페이지를 꽉 채우고 넘치는 부분은 잘림
+    const imgRatio = embedded.width / embedded.height;
+    let dw: number;
+    let dh: number;
+    if (imgRatio > pageRatio) {
+      dh = pageH;
+      dw = pageH * imgRatio;
+    } else {
+      dw = pageW;
+      dh = pageW / imgRatio;
+    }
+    page.drawImage(embedded, {
+      x: (pageW - dw) / 2,
+      y: (pageH - dh) / 2,
+      width: dw,
+      height: dh,
+    });
+  }
+
+  return pdf.save();
+}
