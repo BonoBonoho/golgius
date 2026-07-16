@@ -81,6 +81,8 @@ export default function NamecardAgent({ product = "namecard" }: { product?: Pres
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [design, setDesign] = useState<Design | null>(null);
   const [streaming, setStreaming] = useState(false);
+  const [receivedChars, setReceivedChars] = useState(0); // 스피너 카운터용
+  const [turns, setTurns] = useState(0);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -145,6 +147,10 @@ export default function NamecardAgent({ product = "namecard" }: { product?: Pres
           switch (event) {
             case "text":
               appendAssistantText(String(d.t ?? ""));
+              setReceivedChars((c) => c + String(d.t ?? "").length);
+              break;
+            case "tool_progress":
+              setReceivedChars((c) => c + Number(d.n ?? 0));
               break;
             case "tool_start":
               pushEntry({ kind: "tool", summary: "시안 렌더링 중…", pending: true });
@@ -227,6 +233,8 @@ export default function NamecardAgent({ product = "namecard" }: { product?: Pres
       messagesRef.current = [...messagesRef.current, { role: "user", content }];
       pushEntry({ kind: "user", text: trimmed });
       setStreaming(true);
+      setReceivedChars(0);
+      setTurns((t) => t + 1);
       try {
         await runTurn(0);
       } catch {
@@ -274,6 +282,8 @@ export default function NamecardAgent({ product = "namecard" }: { product?: Pres
           product={product}
           entries={entries}
           streaming={streaming}
+          receivedChars={receivedChars}
+          turns={turns}
           onSend={send}
           onLogoSelect={onLogoSelect}
         />
