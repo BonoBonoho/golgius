@@ -4,6 +4,17 @@
 // PDF 1개면 그대로, 이미지면 서버가 인쇄 규격 PDF로 변환. /api/design-agent/order-upload
 
 import { useRef, useState } from "react";
+import {
+  PRODUCT_PRESETS,
+  workSize,
+  type PresetKey,
+} from "@/lib/design-agent/presets";
+
+const PRODUCT_LABEL: Record<PresetKey, string> = {
+  namecard: "명함",
+  towel: "수건",
+  apparel: "단체복",
+};
 
 const PAPERS = ["스노우지 250g", "스노우지 300g"];
 const QUANTITIES = ["500", "1000", "2000"];
@@ -29,11 +40,13 @@ function FileDrop({
   hint,
   state,
   onPick,
+  aspect = "92/52",
 }: {
   label: string;
   hint: string;
   state: FaceState;
   onPick: (f: File | null) => void;
+  aspect?: string;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const isPdf = state.file && /pdf$/i.test(state.file.type || state.file.name);
@@ -43,7 +56,8 @@ function FileDrop({
       <button
         type="button"
         onClick={() => ref.current?.click()}
-        className="mt-1.5 flex aspect-[92/52] w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-line bg-base transition hover:border-gold"
+        style={{ aspectRatio: aspect }}
+        className="mt-1.5 flex w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-line bg-base transition hover:border-gold"
       >
         {state.preview ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -72,13 +86,22 @@ function FileDrop({
   );
 }
 
-export default function UploadOrder() {
+export default function UploadOrder({ product = "namecard" }: { product?: PresetKey }) {
+  const preset = PRODUCT_PRESETS[product];
+  const work = workSize(preset);
+  const aspect = `${work.w}/${work.h}`;
+  const isNamecard = product === "namecard";
+  const label = PRODUCT_LABEL[product];
+
   const [front, setFront] = useState<FaceState>({ file: null, preview: null });
   const [back, setBack] = useState<FaceState>({ file: null, preview: null });
   const [paper, setPaper] = useState(PAPERS[0]);
   const [quantity, setQuantity] = useState(QUANTITIES[0]);
   const [sides, setSides] = useState(SIDES[0].value);
   const [coating, setCoating] = useState(COATINGS[0].value);
+  // 수건·단체복 견적형 옵션
+  const [qtyText, setQtyText] = useState("");
+  const [baseColor, setBaseColor] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -104,19 +127,29 @@ export default function UploadOrder() {
     e.preventDefault();
     if (busy) return;
     if (!front.file) {
-      setResult({ ok: false, message: "명함 파일을 업로드해 주세요." });
+      setResult({ ok: false, message: `${label} 파일을 업로드해 주세요.` });
+      return;
+    }
+    if (!isNamecard && !qtyText.trim()) {
+      setResult({ ok: false, message: "수량을 입력해 주세요." });
       return;
     }
     setBusy(true);
     setResult(null);
     try {
       const fd = new FormData();
+      fd.set("product", product);
       fd.set("front", front.file);
       if (back.file && !frontIsPdf) fd.set("back", back.file);
-      fd.set("paper", paper);
-      fd.set("quantity", quantity);
-      fd.set("sides", sides);
-      fd.set("coating", coating);
+      if (isNamecard) {
+        fd.set("paper", paper);
+        fd.set("quantity", quantity);
+        fd.set("sides", sides);
+        fd.set("coating", coating);
+      } else {
+        fd.set("quantity", qtyText);
+        fd.set("color", baseColor);
+      }
       fd.set("name", name);
       fd.set("phone", phone);
       fd.set("email", email);
@@ -148,26 +181,28 @@ export default function UploadOrder() {
       className="mx-auto max-w-2xl rounded-2xl border border-line bg-surface p-6 md:p-8"
     >
       <p className="eyebrow">upload &amp; order</p>
-      <h2 className="mt-2 text-xl font-bold">완성한 명함 파일로 발주</h2>
+      <h2 className="mt-2 text-xl font-bold">완성한 {label} 파일로 발주</h2>
       <p className="mt-2 text-sm leading-relaxed text-dim">
-        직접 디자인한 명함 파일을 올려 바로 발주하세요. 완성본 PDF 한 개(앞·뒤 포함) 또는 앞/뒷면
-        이미지를 올리면 됩니다.
+        직접 디자인한 {label} 파일을 올려 바로 발주하세요. 완성본 PDF 한 개(앞·뒤 포함) 또는{" "}
+        {product === "apparel" ? "가슴/등판" : "앞/뒷면"} 이미지를 올리면 됩니다.
       </p>
 
       {/* 파일 업로드 */}
       <div className="mt-5 grid grid-cols-2 gap-4">
         <FileDrop
-          label="앞면 (또는 완성 PDF) *"
+          label={`${product === "apparel" ? "가슴(앞)" : "앞면"} (또는 완성 PDF) *`}
           hint="파일을 선택하세요"
           state={front}
           onPick={pick((s) => setFront(s), front)}
+          aspect={aspect}
         />
         {!frontIsPdf && (
           <FileDrop
-            label="뒷면 (선택)"
+            label={`${product === "apparel" ? "등판(뒤)" : "뒷면"} (선택)`}
             hint="양면이면 추가"
             state={back}
             onPick={pick((s) => setBack(s), back)}
+            aspect={aspect}
           />
         )}
       </div>
@@ -178,40 +213,63 @@ export default function UploadOrder() {
       )}
 
       {/* 인쇄 옵션 */}
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <label className="text-sm text-dim">
-          용지
-          <select value={paper} onChange={(e) => setPaper(e.target.value)} className={inputCls}>
-            {PAPERS.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm text-dim">
-          수량
-          <select value={quantity} onChange={(e) => setQuantity(e.target.value)} className={inputCls}>
-            {QUANTITIES.map((q) => (
-              <option key={q} value={q}>{q}매</option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm text-dim">
-          인쇄
-          <select value={sides} onChange={(e) => setSides(e.target.value)} className={inputCls}>
-            {SIDES.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm text-dim">
-          코팅
-          <select value={coating} onChange={(e) => setCoating(e.target.value)} className={inputCls}>
-            {COATINGS.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-        </label>
-      </div>
+      {isNamecard ? (
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <label className="text-sm text-dim">
+            용지
+            <select value={paper} onChange={(e) => setPaper(e.target.value)} className={inputCls}>
+              {PAPERS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-dim">
+            수량
+            <select value={quantity} onChange={(e) => setQuantity(e.target.value)} className={inputCls}>
+              {QUANTITIES.map((q) => (
+                <option key={q} value={q}>{q}매</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-dim">
+            인쇄
+            <select value={sides} onChange={(e) => setSides(e.target.value)} className={inputCls}>
+              {SIDES.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-dim">
+            코팅
+            <select value={coating} onChange={(e) => setCoating(e.target.value)} className={inputCls}>
+              {COATINGS.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      ) : (
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <label className="text-sm text-dim">
+            수량 *
+            <input
+              value={qtyText}
+              onChange={(e) => setQtyText(e.target.value)}
+              placeholder={product === "towel" ? "예) 200장" : "예) 50벌 (사이즈 혼합)"}
+              className={inputCls}
+            />
+          </label>
+          <label className="text-sm text-dim">
+            {product === "towel" ? "수건 바탕색" : "옷 색상"}
+            <input
+              value={baseColor}
+              onChange={(e) => setBaseColor(e.target.value)}
+              placeholder="예) 차콜"
+              className={inputCls}
+            />
+          </label>
+        </div>
+      )}
 
       {/* 연락처 */}
       <div className="mt-4 space-y-3">
@@ -244,7 +302,7 @@ export default function UploadOrder() {
       </div>
 
       <p className="mt-4 rounded-lg border border-line bg-base/60 px-4 py-3 text-[0.72rem] leading-relaxed text-dim">
-        인쇄 규격은 90×50mm(도련 포함 92×52mm)입니다. 이미지는 규격에 꽉 맞게 배치되며 가장자리 일부가
+        인쇄 규격은 {preset.trimMm.w}×{preset.trimMm.h}mm(여유 포함 {work.w}×{work.h}mm)입니다. 이미지는 규격에 꽉 맞게 배치되며 가장자리 일부가
         재단될 수 있어요. 모니터(RGB)와 인쇄(CMYK) 색상은 다소 차이날 수 있습니다. 접수 후 담당자가
         확인해 연락드립니다.
       </p>
