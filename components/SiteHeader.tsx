@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/order/namecard", label: "명함 디자인" },
+  { href: "/order/namecard", label: "AI 디자인" },
   { href: "/order", label: "발주 요청" },
   { href: "/order/design", label: "수건·운동복 디자인" },
   { href: "/intake", label: "서류 접수" },

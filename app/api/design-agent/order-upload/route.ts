@@ -5,6 +5,7 @@
 import { addOrder, isPersistent, uploadDesignBytes } from "@/lib/orders";
 import { notifyNewOrder } from "@/lib/notify";
 import { imagesToPrintPdf, type UploadImage } from "@/lib/design-agent/pdf";
+import { PRODUCT_PRESETS, isPresetKey } from "@/lib/design-agent/presets";
 import { checkRateLimit, clientIp } from "@/lib/design-agent/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -47,23 +48,37 @@ export async function POST(req: Request) {
   const email = String(form.get("email") ?? "").trim();
   const memo = String(form.get("memo") ?? "").trim();
   const paper = String(form.get("paper") ?? "");
-  const quantity = String(form.get("quantity") ?? "");
+  const quantity = String(form.get("quantity") ?? "").trim();
   const sides = String(form.get("sides") ?? "");
   const coating = String(form.get("coating") ?? "");
+  const color = String(form.get("color") ?? "").trim();
+  const productRaw = String(form.get("product") ?? "namecard");
+  const product = isPresetKey(productRaw) ? productRaw : "namecard";
+  const preset = PRODUCT_PRESETS[product];
+  const isNamecard = product === "namecard";
 
   if (name.length < 2) return json({ ok: false, message: "이름을 2자 이상 입력해 주세요." }, 400);
   if (!PHONE_RE.test(phone)) return json({ ok: false, message: "연락처를 정확히 입력해 주세요." }, 400);
   if (email && !EMAIL_RE.test(email)) return json({ ok: false, message: "이메일 형식이 올바르지 않습니다." }, 400);
   if (memo.length > 1000) return json({ ok: false, message: "요청 내용이 너무 깁니다." }, 400);
-  if (!PAPERS.has(paper) || !QUANTITIES.has(quantity) || !SIDES.has(sides) || !COATINGS.has(coating)) {
-    return json({ ok: false, message: "인쇄 옵션을 다시 선택해 주세요." }, 400);
+  if (isNamecard) {
+    if (!PAPERS.has(paper) || !QUANTITIES.has(quantity) || !SIDES.has(sides) || !COATINGS.has(coating)) {
+      return json({ ok: false, message: "인쇄 옵션을 다시 선택해 주세요." }, 400);
+    }
+  } else {
+    if (quantity.length < 1 || quantity.length > 40) {
+      return json({ ok: false, message: "수량을 입력해 주세요." }, 400);
+    }
+    if (color.length > 40) {
+      return json({ ok: false, message: "색상 입력이 너무 깁니다." }, 400);
+    }
   }
 
   // 파일: front(필수) + back(선택). PDF 1개면 그대로, 이미지면 PDF로 합침.
   const front = form.get("front");
   const back = form.get("back");
   if (!(front instanceof File) || front.size === 0) {
-    return json({ ok: false, message: "명함 파일을 업로드해 주세요." }, 400);
+    return json({ ok: false, message: `${preset.label} 파일을 업로드해 주세요.` }, 400);
   }
   const files = [front, back].filter((f): f is File => f instanceof File && f.size > 0);
   let total = 0;
@@ -97,7 +112,7 @@ export async function POST(req: Request) {
         }
         images.push({ bytes: new Uint8Array(await f.arrayBuffer()), type: f.type });
       }
-      pdfBytes = await imagesToPrintPdf(images);
+      pdfBytes = await imagesToPrintPdf(images, preset);
     }
   } catch (err) {
     console.error("[order-upload] pdf 생성 실패:", err);
@@ -109,7 +124,7 @@ export async function POST(req: Request) {
   let pdfPath: string | null = null;
   if (isPersistent()) {
     try {
-      pdfPath = await uploadDesignBytes(pdfBytes, "application/pdf", `namecard/${id}/print.pdf`);
+      pdfPath = await uploadDesignBytes(pdfBytes, "application/pdf", `${product}/${id}/print.pdf`);
       // 원본 보관 (관리자 확인/재사용용)
       let idx = 0;
       for (const f of files) {
@@ -117,7 +132,7 @@ export async function POST(req: Request) {
         await uploadDesignBytes(
           new Uint8Array(await f.arrayBuffer()),
           f.type || "application/octet-stream",
-          `namecard/${id}/source-${idx}.${ext || "bin"}`
+          `${product}/${id}/source-${idx}.${ext || "bin"}`
         );
         idx += 1;
       }
@@ -132,15 +147,17 @@ export async function POST(req: Request) {
       name,
       phone,
       email,
-      productType: "namecard-upload",
-      options: { color: "", size: "90x50", quantity, paper, sides, coating },
+      productType: `${product}-upload`,
+      options: isNamecard
+        ? { color: "", size: `${preset.trimMm.w}x${preset.trimMm.h}`, quantity, paper, sides, coating }
+        : { color, size: `${preset.trimMm.w}x${preset.trimMm.h}`, quantity },
       message: ["직접 업로드", memo].filter(Boolean).join(" / "),
       designFile: pdfPath,
     });
     await notifyNewOrder(order);
     return json({
       ok: true,
-      message: "명함 발주 요청이 접수됐어요. 담당자가 견적·일정 확인 후 연락드립니다.",
+      message: `${preset.label} 발주 요청이 접수됐어요. 담당자가 견적·일정 확인 후 연락드립니다.`,
       orderId: order.id,
     });
   } catch (err) {

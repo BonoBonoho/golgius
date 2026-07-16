@@ -22,11 +22,21 @@ const COATINGS = [
 const inputCls =
   "mt-1.5 w-full rounded-lg border border-line bg-base px-4 py-2.5 text-sm outline-none focus:border-gold";
 
+import type { PresetKey } from "@/lib/design-agent/presets";
+
+const PRODUCT_LABEL: Record<PresetKey, string> = {
+  namecard: "명함",
+  towel: "수건",
+  apparel: "단체복",
+};
+
 export default function OrderSheet({
+  product = "namecard",
   design,
   logoDataUrl,
   onClose,
 }: {
+  product?: PresetKey;
   design: Design;
   logoDataUrl: string | null;
   onClose: () => void;
@@ -35,6 +45,9 @@ export default function OrderSheet({
   const [quantity, setQuantity] = useState(QUANTITIES[0]);
   const [sides, setSides] = useState(SIDES[0].value);
   const [coating, setCoating] = useState(COATINGS[0].value);
+  // 수건·단체복 견적형 옵션
+  const [qtyText, setQtyText] = useState("");
+  const [baseColor, setBaseColor] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -42,6 +55,8 @@ export default function OrderSheet({
   const [company, setCompany] = useState(""); // 허니팟
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const isNamecard = product === "namecard";
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,12 +68,15 @@ export default function OrderSheet({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          product,
           name,
           phone,
           email,
           memo,
           company,
-          options: { paper, quantity, sides, coating },
+          options: isNamecard
+            ? { paper, quantity, sides, coating }
+            : { quantity: qtyText, color: baseColor },
           design: {
             front_svg: design.frontSvg,
             back_svg: design.backSvg,
@@ -105,7 +123,7 @@ export default function OrderSheet({
             <div className="flex items-center justify-between">
               <div>
                 <p className="eyebrow">place order</p>
-                <h3 className="mt-2 text-lg font-bold">명함 발주 요청</h3>
+                <h3 className="mt-2 text-lg font-bold">{PRODUCT_LABEL[product]} 발주 요청</h3>
               </div>
               <button
                 type="button"
@@ -117,43 +135,68 @@ export default function OrderSheet({
             </div>
 
             <p className="mt-2 font-mono text-[0.7rem] text-dim">
-              시안: {design.summary || "채팅으로 만든 명함"}
+              시안: {design.summary || `채팅으로 만든 ${PRODUCT_LABEL[product]}`}
             </p>
 
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <label className="text-sm text-dim">
-                용지
-                <select value={paper} onChange={(e) => setPaper(e.target.value)} className={inputCls}>
-                  {PAPERS.map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-sm text-dim">
-                수량
-                <select value={quantity} onChange={(e) => setQuantity(e.target.value)} className={inputCls}>
-                  {QUANTITIES.map((q) => (
-                    <option key={q} value={q}>{q}매</option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-sm text-dim">
-                인쇄
-                <select value={sides} onChange={(e) => setSides(e.target.value)} className={inputCls}>
-                  {SIDES.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-sm text-dim">
-                코팅
-                <select value={coating} onChange={(e) => setCoating(e.target.value)} className={inputCls}>
-                  {COATINGS.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
+            {isNamecard ? (
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <label className="text-sm text-dim">
+                  용지
+                  <select value={paper} onChange={(e) => setPaper(e.target.value)} className={inputCls}>
+                    {PAPERS.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-sm text-dim">
+                  수량
+                  <select value={quantity} onChange={(e) => setQuantity(e.target.value)} className={inputCls}>
+                    {QUANTITIES.map((q) => (
+                      <option key={q} value={q}>{q}매</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-sm text-dim">
+                  인쇄
+                  <select value={sides} onChange={(e) => setSides(e.target.value)} className={inputCls}>
+                    {SIDES.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-sm text-dim">
+                  코팅
+                  <select value={coating} onChange={(e) => setCoating(e.target.value)} className={inputCls}>
+                    {COATINGS.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : (
+              /* 수건·단체복은 견적형 — 수량·바탕색만 받고 담당자가 확인 */
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <label className="text-sm text-dim">
+                  수량 *
+                  <input
+                    value={qtyText}
+                    onChange={(e) => setQtyText(e.target.value)}
+                    required
+                    placeholder={product === "towel" ? "예) 200장" : "예) 50벌 (사이즈 혼합)"}
+                    className={inputCls}
+                  />
+                </label>
+                <label className="text-sm text-dim">
+                  {product === "towel" ? "수건 바탕색" : "옷 색상"}
+                  <input
+                    value={baseColor}
+                    onChange={(e) => setBaseColor(e.target.value)}
+                    placeholder="예) 차콜"
+                    className={inputCls}
+                  />
+                </label>
+              </div>
+            )}
 
             <div className="mt-4 space-y-3">
               <label className="block text-sm text-dim">

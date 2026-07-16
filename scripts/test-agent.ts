@@ -1,7 +1,7 @@
 // 디자인 에이전트 CLI 검증 — UI 없이 프롬프트·툴 계약 품질을 확인한다.
 // 실행: npm run test:agent  (ANTHROPIC_API_KEY 필요 — .env.local 로드)
 //
-// 시나리오: 명함 요청 → render_namecard 호출 확인 → SVG 계약 단언
+// 시나리오: 명함 요청 → render_design 호출 확인 → SVG 계약 단언
 //           → tool_result 반환 → 수정 요청 → 재렌더 확인
 
 import "dotenv/config";
@@ -11,7 +11,7 @@ config({ path: ".env.local" });
 import Anthropic from "@anthropic-ai/sdk";
 import type { MessageParam, ToolUseBlock } from "@anthropic-ai/sdk/resources/messages";
 import { buildSystemPrompt } from "../lib/design-agent/system-prompt";
-import { RENDER_NAMECARD_TOOL, isRenderNamecardInput } from "../lib/design-agent/tools";
+import { RENDER_DESIGN_TOOL, isRenderDesignInput } from "../lib/design-agent/tools";
 import { ALLOWED_FONTS, PRODUCT_PRESETS, viewBoxOf } from "../lib/design-agent/presets";
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -46,7 +46,7 @@ async function turn(messages: MessageParam[]) {
     model,
     max_tokens: 8000,
     system: buildSystemPrompt(),
-    tools: [RENDER_NAMECARD_TOOL],
+    tools: [RENDER_DESIGN_TOOL],
     messages,
   });
   return res;
@@ -64,14 +64,14 @@ async function main() {
 
   const first = await turn(messages);
   const toolUse = first.content.find(
-    (b): b is ToolUseBlock => b.type === "tool_use" && b.name === "render_namecard"
+    (b): b is ToolUseBlock => b.type === "tool_use" && b.name === "render_design"
   );
-  assert(!!toolUse, "render_namecard 호출됨");
+  assert(!!toolUse, "render_design 호출됨");
   if (!toolUse) process.exit(1);
 
   const input = toolUse.input;
-  assert(isRenderNamecardInput(input), "input 스키마 형태 일치");
-  if (!isRenderNamecardInput(input)) process.exit(1);
+  assert(isRenderDesignInput(input), "input 스키마 형태 일치");
+  if (!isRenderDesignInput(input)) process.exit(1);
 
   checkSvg(input.front_svg, "front");
   checkSvg(input.back_svg, "back");
@@ -99,10 +99,10 @@ async function main() {
 
   const second = await turn(messages);
   const toolUse2 = second.content.find(
-    (b): b is ToolUseBlock => b.type === "tool_use" && b.name === "render_namecard"
+    (b): b is ToolUseBlock => b.type === "tool_use" && b.name === "render_design"
   );
   assert(!!toolUse2, "수정 요청에 재렌더링");
-  if (toolUse2 && isRenderNamecardInput(toolUse2.input)) {
+  if (toolUse2 && isRenderDesignInput(toolUse2.input)) {
     checkSvg(toolUse2.input.back_svg, "back(수정)");
     assert(/Hong|HONG|Gildong|Gil-dong/i.test(toolUse2.input.back_svg), "뒷면 영문 반영");
     console.log(`  summary: ${toolUse2.input.summary}`);

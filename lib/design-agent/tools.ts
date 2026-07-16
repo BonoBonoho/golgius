@@ -1,11 +1,11 @@
 // design-agent가 사용하는 Anthropic tool 정의.
-// render_namecard: Claude가 시안을 만들/고칠 때마다 호출 — 구조화된 SVG 계약으로
-// 클라이언트 프리뷰와 서버 PDF가 동일 데이터를 사용한다.
+// render_design: Claude가 시안을 만들/고칠 때마다 호출 — 구조화된 SVG 계약으로
+// 클라이언트 프리뷰와 서버 PDF가 동일 데이터를 사용한다. (명함·수건·단체복 공용)
 
 import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 import { ALLOWED_FONTS } from "./presets";
 
-export type RenderNamecardInput = {
+export type RenderDesignInput = {
   front_svg: string;
   back_svg: string;
   palette: string[];
@@ -13,10 +13,10 @@ export type RenderNamecardInput = {
   summary: string;
 };
 
-export const RENDER_NAMECARD_TOOL: Tool = {
-  name: "render_namecard",
+export const RENDER_DESIGN_TOOL: Tool = {
+  name: "render_design",
   description:
-    "명함 시안을 생성하거나 수정할 때마다 호출한다. 앞면·뒷면 SVG 전체 문서를 전달하면 고객 화면에 즉시 렌더링된다. 부분 수정이라도 항상 두 면의 완전한 SVG를 다시 보낸다.",
+    "시안을 생성하거나 수정할 때마다 호출한다. 앞면·뒷면 SVG 전체 문서를 전달하면 고객 화면에 즉시 렌더링된다. 부분 수정이라도 항상 두 면의 완전한 SVG를 다시 보낸다.",
   input_schema: {
     type: "object" as const,
     additionalProperties: false,
@@ -24,7 +24,7 @@ export const RENDER_NAMECARD_TOOL: Tool = {
     properties: {
       front_svg: {
         type: "string",
-        description: '앞면 SVG 전체. viewBox="0 0 92 52", 1 unit = 1mm.',
+        description: "앞면 SVG 전체. 시스템 프롬프트에 지정된 viewBox, 1 unit = 1mm.",
       },
       back_svg: {
         type: "string",
@@ -48,7 +48,7 @@ export const RENDER_NAMECARD_TOOL: Tool = {
   },
 };
 
-export function isRenderNamecardInput(v: unknown): v is RenderNamecardInput {
+export function isRenderDesignInput(v: unknown): v is RenderDesignInput {
   if (typeof v !== "object" || v === null) return false;
   const o = v as Record<string, unknown>;
   return (
@@ -59,3 +59,7 @@ export function isRenderNamecardInput(v: unknown): v is RenderNamecardInput {
     typeof o.summary === "string"
   );
 }
+
+// 하위호환 별칭 (기존 import 유지용)
+export const RENDER_NAMECARD_TOOL = RENDER_DESIGN_TOOL;
+export const isRenderNamecardInput = isRenderDesignInput;

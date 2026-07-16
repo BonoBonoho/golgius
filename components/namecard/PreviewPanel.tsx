@@ -6,14 +6,18 @@
 import { useMemo, useState } from "react";
 import type { Design } from "./NamecardAgent";
 import { sanitizeSvgForInline, substituteLogo } from "@/lib/design-agent/sanitize-svg";
-import { PRODUCT_PRESETS, safeRect, workSize } from "@/lib/design-agent/presets";
+import {
+  PRODUCT_PRESETS,
+  safeRect,
+  workSize,
+  type PresetKey,
+  type ProductPreset,
+} from "@/lib/design-agent/presets";
 
-const PRESET = PRODUCT_PRESETS.namecard;
-
-function GuideOverlay() {
-  const work = workSize(PRESET);
-  const safe = safeRect(PRESET);
-  const b = PRESET.bleedMm;
+function GuideOverlay({ preset }: { preset: ProductPreset }) {
+  const work = workSize(preset);
+  const safe = safeRect(preset);
+  const b = preset.bleedMm;
   return (
     <svg
       viewBox={`0 0 ${work.w} ${work.h}`}
@@ -24,8 +28,8 @@ function GuideOverlay() {
       <rect
         x={b}
         y={b}
-        width={PRESET.trimMm.w}
-        height={PRESET.trimMm.h}
+        width={preset.trimMm.w}
+        height={preset.trimMm.h}
         fill="none"
         stroke="#ff5555"
         strokeWidth={0.25}
@@ -47,14 +51,17 @@ function GuideOverlay() {
 }
 
 function CardFace({
+  preset,
   svg,
   logoDataUrl,
   showGuides,
 }: {
+  preset: ProductPreset;
   svg: string;
   logoDataUrl: string | null;
   showGuides: boolean;
 }) {
+  const work = workSize(preset);
   const html = useMemo(() => {
     const cleaned = sanitizeSvgForInline(substituteLogo(svg, logoDataUrl));
     return cleaned;
@@ -62,7 +69,10 @@ function CardFace({
 
   if (!html) {
     return (
-      <div className="flex aspect-[92/52] items-center justify-center rounded-md bg-white/5 font-mono text-xs text-dim">
+      <div
+        className="flex items-center justify-center rounded-md bg-white/5 font-mono text-xs text-dim"
+        style={{ aspectRatio: `${work.w}/${work.h}` }}
+      >
         시안을 표시할 수 없습니다
       </div>
     );
@@ -71,18 +81,30 @@ function CardFace({
   return (
     <div className="relative overflow-hidden rounded-md shadow-2xl ring-1 ring-white/10 [&>svg]:block [&>svg]:h-auto [&>svg]:w-full">
       <div dangerouslySetInnerHTML={{ __html: html }} />
-      {showGuides && <GuideOverlay />}
+      {showGuides && <GuideOverlay preset={preset} />}
     </div>
   );
 }
 
+// 품목별 앞/뒷면 라벨
+const FACE_LABEL: Record<PresetKey, { front: string; back: string }> = {
+  namecard: { front: "앞면", back: "뒷면" },
+  towel: { front: "앞면", back: "뒷면" },
+  apparel: { front: "가슴(앞)", back: "등판(뒤)" },
+};
+
 export default function PreviewPanel({
+  product = "namecard",
   design,
   logoDataUrl,
 }: {
+  product?: PresetKey;
   design: Design | null;
   logoDataUrl: string | null;
 }) {
+  const preset = PRODUCT_PRESETS[product];
+  const faceLabel = FACE_LABEL[product];
+  const work = workSize(preset);
   const [face, setFace] = useState<"front" | "back">("front");
   const [zoom, setZoom] = useState(1);
   const [showGuides, setShowGuides] = useState(true);
@@ -100,7 +122,7 @@ export default function PreviewPanel({
               face === "front" ? "border-gold text-gold" : "border-line text-dim hover:text-ink"
             }`}
           >
-            앞면
+            {faceLabel.front}
           </button>
           <button
             type="button"
@@ -109,7 +131,7 @@ export default function PreviewPanel({
               face === "back" ? "border-gold text-gold" : "border-line text-dim hover:text-ink"
             }`}
           >
-            뒷면
+            {faceLabel.back}
           </button>
           <span className="mx-1 h-4 w-px bg-line" />
           {[1, 1.5, 2].map((z) => (
@@ -146,14 +168,18 @@ export default function PreviewPanel({
         >
           {design ? (
             <CardFace
+              preset={preset}
               svg={face === "front" ? design.frontSvg : design.backSvg}
               logoDataUrl={logoDataUrl}
               showGuides={showGuides}
             />
           ) : (
-            <div className="flex aspect-[92/52] flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-base/60">
+            <div
+              className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line bg-base/60"
+              style={{ aspectRatio: `${work.w}/${work.h}` }}
+            >
               <span className="font-mono text-xs text-dim">
-                90 × 50 mm — 시안이 여기 표시됩니다
+                {preset.trimMm.w} × {preset.trimMm.h} mm — 시안이 여기 표시됩니다
               </span>
               <span className="font-mono text-[0.65rem] text-dim/60">
                 채팅으로 정보를 알려주시면 바로 렌더링돼요

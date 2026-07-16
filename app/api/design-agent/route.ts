@@ -1,6 +1,6 @@
 // 명함 디자인 에이전트 — SSE 스트리밍 채팅.
 // 클라이언트가 전체 대화 히스토리(Anthropic MessageParam[])를 매 턴 전송하는
-// 스테이트리스 서버. Claude는 render_namecard 도구로 시안을 전달한다.
+// 스테이트리스 서버. Claude는 render_design 도구로 시안을 전달한다.
 //
 // SSE 이벤트: text {t} · tool_start {name} · tool_progress {n} ·
 //             tool {id, input} · done {stopReason, message} · error {message}
@@ -8,7 +8,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { buildSystemPrompt } from "@/lib/design-agent/system-prompt";
-import { RENDER_NAMECARD_TOOL } from "@/lib/design-agent/tools";
+import { RENDER_DESIGN_TOOL } from "@/lib/design-agent/tools";
+import { PRODUCT_PRESETS, isPresetKey } from "@/lib/design-agent/presets";
 import { checkRateLimit, clientIp } from "@/lib/design-agent/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -79,15 +80,20 @@ export async function POST(req: Request) {
   }
 
   let messages: MessageParam[] | null = null;
+  let productKey = "namecard";
   try {
-    const parsed = JSON.parse(bodyText) as { messages?: unknown };
+    const parsed = JSON.parse(bodyText) as { messages?: unknown; product?: unknown };
     messages = validateMessages(parsed.messages);
+    if (typeof parsed.product === "string" && isPresetKey(parsed.product)) {
+      productKey = parsed.product;
+    }
   } catch {
     /* fallthrough */
   }
   if (!messages) {
     return json({ ok: false, message: "잘못된 요청입니다." }, 400);
   }
+  const preset = PRODUCT_PRESETS[productKey as keyof typeof PRODUCT_PRESETS];
 
   const client = new Anthropic({ apiKey });
   const model = process.env.DESIGN_AGENT_MODEL ?? "claude-sonnet-5";
@@ -107,11 +113,11 @@ export async function POST(req: Request) {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt(),
+              text: buildSystemPrompt(preset),
               cache_control: { type: "ephemeral" },
             },
           ],
-          tools: [RENDER_NAMECARD_TOOL],
+          tools: [RENDER_DESIGN_TOOL],
           messages: messages!,
         });
 
@@ -132,7 +138,7 @@ export async function POST(req: Request) {
 
         const final = await stream.finalMessage();
         for (const block of final.content) {
-          if (block.type === "tool_use" && block.name === RENDER_NAMECARD_TOOL.name) {
+          if (block.type === "tool_use" && block.name === RENDER_DESIGN_TOOL.name) {
             send("tool", { id: block.id, input: block.input });
           }
         }

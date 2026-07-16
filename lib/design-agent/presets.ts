@@ -23,10 +23,31 @@ export const PRODUCT_PRESETS = {
     safeMm: 3,
     dpi: 300,
   },
-  // 확장 예정: flyer, poster, sticker …
+  // 수건: 헬스장 스포츠 수건(40×80cm) 전면 나염 기준. 도련·여백은 제작처 규격 확인 후 조정.
+  towel: {
+    key: "towel",
+    label: "수건",
+    trimMm: { w: 800, h: 400 },
+    bleedMm: 10,
+    safeMm: 30,
+    dpi: 150, // 대형 나염은 150dpi면 충분
+  },
+  // 단체복: 가슴/등판 프린트 영역(최대 A3급). 시안 목적 — 실제 판 규격은 견적 시 확정.
+  apparel: {
+    key: "apparel",
+    label: "단체복",
+    trimMm: { w: 300, h: 400 },
+    bleedMm: 5,
+    safeMm: 10,
+    dpi: 150,
+  },
 } satisfies Record<string, ProductPreset>;
 
 export type PresetKey = keyof typeof PRODUCT_PRESETS;
+
+export function isPresetKey(v: string): v is PresetKey {
+  return v in PRODUCT_PRESETS;
+}
 
 /** 작업(도련 포함) 사이즈 mm */
 export function workSize(p: ProductPreset) {

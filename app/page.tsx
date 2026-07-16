@@ -60,8 +60,8 @@ export default function Home() {
               {
                 href: "/order/namecard",
                 eyebrow: "AI Design — Beta",
-                title: "명함 디자인·발주",
-                desc: "채팅으로 만들거나 내 파일을 올려 인쇄 발주까지.",
+                title: "AI 디자인 스튜디오",
+                desc: "명함·수건·단체복을 채팅으로 만들거나 내 파일을 올려 발주까지.",
               },
               {
                 href: "/order",

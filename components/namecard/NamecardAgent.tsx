@@ -8,6 +8,7 @@ import { useCallback, useRef, useState } from "react";
 import ChatPanel, { type ChatEntry } from "./ChatPanel";
 import PreviewPanel from "./PreviewPanel";
 import OrderSheet from "./OrderSheet";
+import type { PresetKey } from "@/lib/design-agent/presets";
 
 export type Design = {
   frontSvg: string;
@@ -76,7 +77,7 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-export default function NamecardAgent() {
+export default function NamecardAgent({ product = "namecard" }: { product?: PresetKey }) {
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [design, setDesign] = useState<Design | null>(null);
   const [streaming, setStreaming] = useState(false);
@@ -116,7 +117,7 @@ export default function NamecardAgent() {
       const res = await fetch("/api/design-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: messagesRef.current }),
+        body: JSON.stringify({ messages: messagesRef.current, product }),
       });
 
       if (!res.ok || !res.body) {
@@ -199,7 +200,7 @@ export default function NamecardAgent() {
         }
       }
     },
-    [appendAssistantText, pushEntry, resolveToolEntry]
+    [appendAssistantText, pushEntry, resolveToolEntry, product]
   );
 
   const send = useCallback(
@@ -270,6 +271,7 @@ export default function NamecardAgent() {
     <div className="flex flex-col-reverse gap-6 lg:grid lg:grid-cols-12 lg:items-start">
       <section className="lg:col-span-5">
         <ChatPanel
+          product={product}
           entries={entries}
           streaming={streaming}
           onSend={send}
@@ -278,7 +280,7 @@ export default function NamecardAgent() {
       </section>
 
       <section className="lg:col-span-7 lg:sticky lg:top-6">
-        <PreviewPanel design={design} logoDataUrl={logoDataUrl} />
+        <PreviewPanel product={product} design={design} logoDataUrl={logoDataUrl} />
         <div className="mt-4 flex justify-end">
           <button
             type="button"
@@ -293,6 +295,7 @@ export default function NamecardAgent() {
 
       {sheetOpen && design && (
         <OrderSheet
+          product={product}
           design={design}
           logoDataUrl={logoDataUrl}
           onClose={() => setSheetOpen(false)}
