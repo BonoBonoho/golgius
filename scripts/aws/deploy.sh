@@ -43,8 +43,9 @@ $SSH 'command -v node >/dev/null || (curl -fsSL https://deb.nodesource.com/setup
 $SSH 'command -v caddy >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl >/dev/null && curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt | sudo tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null && sudo apt-get update -qq && sudo apt-get install -y caddy)'
 
 echo "== [4/6] 코드 rsync(자기완결 번들 → ~/app) + .env 업로드 =="
-rsync -az --delete -e "ssh ${SSHOPTS[*]}" "$STAGE"/ ubuntu@"$TARGET":~/app/
-scp "${SSHOPTS[@]}" .env.production.local ubuntu@"$TARGET":~/app/.env   # rsync --delete 뒤에 올려야 유지됨
+# --exclude .env: rsync --delete가 서버의 .env를 지우지 않도록(배포 중단돼도 앱 생존).
+rsync -az --delete --exclude .env -e "ssh ${SSHOPTS[*]}" "$STAGE"/ ubuntu@"$TARGET":~/app/
+scp "${SSHOPTS[@]}" .env.production.local ubuntu@"$TARGET":~/app/.env   # 최신 env 반영(순서 무관, 안전)
 
 # resvg 네이티브 바이너리: 맥 빌드 번들엔 darwin만 담김 → EC2(linux-arm64)용을 현장 설치(멱등).
 # rsync --delete 가 매번 지우므로 rsync 직후에 실행해야 함.
