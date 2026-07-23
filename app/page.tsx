@@ -3,7 +3,7 @@ import { verticals, type VerticalKey } from "@/lib/verticals";
 import Brandmark from "@/components/Brandmark";
 
 // 단일 도메인 진입점. 방문자를 헬스장/병원 버티컬로 안내.
-// (운영 시 광고 랜딩은 /gym, /hospital 로 직접 유입되는 경우가 많음)
+// (운영 시 광고 랜딩은 /gym, /medical 로 직접 유입되는 경우가 많음)
 export default function Home() {
   const keys: VerticalKey[] = ["gym", "hospital"];
 
@@ -31,7 +31,7 @@ export default function Home() {
             return (
               <Link
                 key={k}
-                href={`/${k}`}
+                href={v.path}
                 style={{ ["--accent" as string]: v.accent } as React.CSSProperties}
                 className="group flex flex-col justify-between rounded-2xl border border-line bg-surface p-8 transition hover:border-[var(--accent)]"
               >

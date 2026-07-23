@@ -6,7 +6,7 @@ import Cases from "@/components/sections/Cases";
 import Reviews from "@/components/sections/Reviews";
 import ContactCTA from "@/components/sections/ContactCTA";
 
-export default function HospitalPage() {
+export default function MedicalPage() {
   return (
     <VerticalShell vertical="hospital">
       <Hero vertical="hospital" />

@@ -36,6 +36,7 @@ export interface OfferingGroup {
 
 export interface Vertical {
   key: VerticalKey;
+  path: string; // 라우트 경로 — key(데이터 값)와 분리 (예: hospital → /medical)
   label: string; // 한글 라벨
   labelEn: string; // 영문 라벨 (eyebrow용)
   accent: string; // 런타임 주입되는 --accent 값
@@ -61,6 +62,7 @@ export interface Vertical {
 export const verticals: Record<VerticalKey, Vertical> = {
   gym: {
     key: "gym",
+    path: "/gym",
     label: "헬스장",
     labelEn: "FITNESS",
     accent: "#e0892b", // 에너지 오렌지
@@ -114,6 +116,7 @@ export const verticals: Record<VerticalKey, Vertical> = {
   },
   hospital: {
     key: "hospital",
+    path: "/medical",
     label: "병원",
     labelEn: "CLINIC",
     accent: "#3b8fb0", // 임상 신뢰 블루

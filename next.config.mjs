@@ -11,6 +11,10 @@ const extraOrigins = (process.env.ALLOWED_ORIGINS || '')
 
 const nextConfig = {
   output: 'standalone',
+  // 구 URL 영구 리다이렉트 (광고/북마크/검색엔진 유입 보존)
+  async redirects() {
+    return [{ source: '/hospital', destination: '/medical', permanent: true }];
+  },
   // 부모 디렉터리 lockfile로 인한 워크스페이스 오인 방지 — standalone을 평평하게 유지
   outputFileTracingRoot: import.meta.dirname,
   // resvg 네이티브 바이너리는 번들 대신 node_modules에서 로드
