@@ -11,7 +11,7 @@ export default function Header({ vertical }: { vertical: VerticalKey }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
         {/* 워드마크 + 현재 버티컬 태그 */}
         <div className="flex items-center gap-3">
-          <Link href={`/${vertical}`} aria-label="GOLGIUS 홈">
+          <Link href={v.path} aria-label="GOLGIUS 홈">
             <Brandmark size="md" />
           </Link>
           <span
@@ -33,7 +33,7 @@ export default function Header({ vertical }: { vertical: VerticalKey }) {
             <Link href="/gym/shop" className="transition hover:text-ink">기구 스토어</Link>
           )}
           <a href="#process" className="transition hover:text-ink">진행 과정</a>
-          <Link href={`/${other.key}`} className="transition hover:text-ink">
+          <Link href={other.path} className="transition hover:text-ink">
             {other.label} 보기
           </Link>
         </nav>
